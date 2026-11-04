@@ -1,0 +1,2581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rally Book">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFFFFF">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>Rally Book</title>
+<style>
+/* Layout: phone-first single column, sticky header, fixed bottom tab bar — a field notebook of "if we lose contact" cards */
+:root {
+  --bg: #1F2429;
+  --on-bg: #F1F4F6;
+  --on-bg-muted: #AEB8C1;
+  --surface: #FFFFFF;
+  --surface-2: #F5F7F8;
+  --ink: #17212A;
+  --muted: #5A6772;
+  --line: #D2D9DF;
+  --accent: #D9510A;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #FBE6DA;
+  --ok: #2E7A4E;
+  --ok-soft: #DDF0E4;
+  --bad: #B83227;
+  --bad-soft: #F8DEDB;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --radius: 10px;
+  --t-storage: #0E7C7B; --t-associate: #6A4BB8; --t-business: #2560A8; --t-landmark: #8C6212;
+  --t-campground: #2E7A3A; --t-visited: #5A6878; --t-other: #B0357A;
+  --c-1: #0B6E99; --c-2: #9A4D00; --c-3: #7A2E8E; --c-4: #1F7A5A; --c-5: #A3324A; --c-6: #55661A; --c-7: #2B4C9B; --c-8: #8A5A44;
+  --map-water: #ECEEEA; --map-land: #F7F8F6; --map-border: #9AA6B0; --map-road: #C7B49A; --map-city: #3E4A54; --map-state: #B7C0C8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161B; --surface: #192128; --surface-2: #1F2932; --ink: #E5EBEF; --muted: #92A0AB;
+    --line: #2A3540; --accent: #FF7A33; --accent-ink: #1A0E06; --accent-soft: #3A2316;
+    --ok: #5DBF89; --ok-soft: #173326; --bad: #FF6E61; --bad-soft: #3A1A17; color-scheme: dark; --on-bg: #E5EBEF; --on-bg-muted: #92A0AB; --t-storage: #3CC4C2; --t-associate: #A58BF0; --t-business: #6FA8F2; --t-landmark: #E0B04F; --t-campground: #6CC77A; --t-visited: #A4B2C0; --t-other: #F07BBE; --c-1: #5FC1EE; --c-2: #F2A65A; --c-3: #D08BE6; --c-4: #5DD1A6; --c-5: #F08CA0; --c-6: #B5CC5C; --c-7: #8FA9F5; --c-8: #D9A58C; --map-water: #151B20; --map-land: #1C252D; --map-border: #4D5B67; --map-road: #6B5D49; --map-city: #B8C4CE; --map-state: #3E4B57;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161B; --surface: #192128; --surface-2: #1F2932; --ink: #E5EBEF; --muted: #92A0AB;
+  --line: #2A3540; --accent: #FF7A33; --accent-ink: #1A0E06; --accent-soft: #3A2316;
+  --ok: #5DBF89; --ok-soft: #173326; --bad: #FF6E61; --bad-soft: #3A1A17; color-scheme: dark; --on-bg: #E5EBEF; --on-bg-muted: #92A0AB; --t-storage: #3CC4C2; --t-associate: #A58BF0; --t-business: #6FA8F2; --t-landmark: #E0B04F; --t-campground: #6CC77A; --t-visited: #A4B2C0; --t-other: #F07BBE; --c-1: #5FC1EE; --c-2: #F2A65A; --c-3: #D08BE6; --c-4: #5DD1A6; --c-5: #F08CA0; --c-6: #B5CC5C; --c-7: #8FA9F5; --c-8: #D9A58C; --map-water: #151B20; --map-land: #1C252D; --map-border: #4D5B67; --map-road: #6B5D49; --map-city: #B8C4CE; --map-state: #3E4B57;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; } :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); } [hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+p { margin: 0; }
+
+.wrap { max-width: 560px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.brand { font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; }
+.brand span { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.field { display: grid; gap: 6px; }
+.label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.input, .area { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.area { resize: vertical; min-height: 72px; line-height: 1.45; }
+.mono { font-family: var(--font-mono); font-size: 12.5px; word-break: break-all; }
+.hint { font-size: 13px; color: var(--muted); background: var(--surface-2); border: 1px dashed var(--line); border-radius: 8px; padding: 10px 12px; }
+.hint code { font-family: var(--font-mono); color: var(--ink); }
+.err { color: var(--bad); font-size: 13.5px; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 11px 16px; font-weight: 600; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn-danger { background: var(--bad); color: #fff; border-color: var(--bad); }
+.btn-quiet { background: transparent; }
+.btn-small { padding: 6px 12px; font-size: 13.5px; }
+.btn-block { width: 100%; }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 600; text-align: left; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; }
+.row > .btn { flex: 1 1 140px; }
+
+/* Lock screen */
+.lock { min-height: 100%; display: grid; place-items: center; padding-block: 32px; }
+.lock-inner { width: 100%; max-width: 400px; display: grid; gap: 18px; }
+.seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.seg button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 9px 12px; display: grid; gap: 1px; min-width: 0; }
+.seg button strong { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg button small { color: var(--muted); font-size: 12px; }
+.seg button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+
+/* App chrome */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+header.top .wrap { display: flex; align-items: center; gap: 10px; padding-block: 10px; }
+header.top .brand { font-size: 26px; flex: 1; }
+.chip { font-family: var(--font-mono); font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.chip-accent { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.chip-ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.chip-bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.icon-btn { border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-weight: 600; }
+
+main.wrap { padding-block: 16px calc(96px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 16px; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.05; margin: 0; text-transform: uppercase; letter-spacing: 0.01em; text-wrap: balance; }
+.lede { margin-top: -8px; color: var(--muted); font-size: 14px; }
+.banner { font-size: 13px; color: var(--muted); border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; }
+
+/* Plan cards */
+details.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+details.card.removed { opacity: 0.7; }
+details.card > summary { list-style: none; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; cursor: pointer; }
+details.card > summary::-webkit-details-marker { display: none; }
+.who { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.1; text-transform: uppercase; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.meta { grid-column: 1 / -1; font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.caret { align-self: center; color: var(--muted); font-size: 13px; transition: transform .15s; }
+details[open] .caret { transform: rotate(90deg); }
+dl.plan { margin: 0; padding: 0 16px 6px; display: grid; }
+.plan-item { padding: 12px 0; border-top: 1px solid var(--line); display: grid; gap: 3px; min-width: 0; }
+.plan-item dt { display: flex; align-items: center; gap: 8px; }
+.plan-item dt > .label { display: inline-block; color: var(--ink); font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; padding: 4px 9px; line-height: 1.2; }
+.plan-item dd { margin: 4px 0 0; padding-left: 11px; overflow-wrap: anywhere; color: var(--ink); }
+.plan-item { gap: 2px; }
+
+/* Panels */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.panel h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.steps { margin: 0; padding-left: 20px; color: var(--muted); font-size: 14px; display: grid; gap: 4px; }
+.change { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+.change:first-of-type { border-top: 0; padding-top: 0; }
+.old { color: var(--muted); text-decoration: line-through; font-size: 14px; overflow-wrap: anywhere; }
+.new { overflow-wrap: anywhere; }
+.notice { border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.notice-bad { background: var(--bad-soft); color: var(--bad); }
+.notice-ok { background: var(--ok-soft); color: var(--ok); }
+.notice-info { background: var(--accent-soft); color: var(--ink); }
+.code-big { font-family: var(--font-mono); font-size: 26px; font-weight: 500; letter-spacing: 0.12em; text-align: center; padding: 12px; border: 1px dashed var(--accent); border-radius: 8px; }
+
+.person { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 12px 0; border-top: 1px solid var(--line); align-items: center; }
+.person:first-of-type { border-top: 0; padding-top: 0; }
+.person .name { font-weight: 600; }
+.person .fp { grid-column: 1 / -1; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.person .acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.person .confirm { grid-column: 1 / -1; display: grid; gap: 10px; margin-top: 8px; }
+
+/* Tab bar */
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+nav.tabs .inner { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); }
+nav.tabs button { border: 0; background: transparent; padding: 10px 2px 12px; display: grid; justify-items: center; gap: 2px; color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-top: 3px solid transparent; }
+nav.tabs button svg { width: 22px; height: 22px; }
+nav.tabs button[aria-selected="true"] { color: var(--accent); border-top-color: var(--accent); }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); z-index: 7; background: var(--ink); color: var(--surface); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; max-width: calc(100% - 32px); }
+.sheet-back { position: fixed; inset: 0; z-index: 20; background: rgba(8, 12, 16, 0.55); display: grid; align-items: end; justify-items: center; padding-top: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.sheet { width: 100%; max-width: 480px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); }
+.sheet h3 { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.1; text-transform: uppercase; text-wrap: balance; }
+@media (min-width: 700px) { .sheet-back { align-items: center; } }
+a.btn { text-decoration: none; text-align: center; display: inline-block; }
+.route { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); margin-top: 8px; min-width: 0; }
+.route-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.route-head strong { font-weight: 600; }
+.sketch { display: block; width: 100%; max-width: 100%; height: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+.wps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wps li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; align-items: start; }
+.wp-letter { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 600; font-size: 12.5px; font-family: var(--font-mono); }
+.wp-text { display: grid; gap: 1px; min-width: 0; overflow-wrap: anywhere; }
+.leg { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.route-edit { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 0; display: grid; gap: 10px; background: var(--surface-2); min-width: 0; }
+.wp-edit { display: grid; grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1.3fr) 38px; gap: 6px; align-items: center; }
+.wp-edit .input { padding: 9px 10px; min-width: 0; }
+.wp-del { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; height: 38px; font-size: 18px; line-height: 1; color: var(--muted); }
+@media (max-width: 440px) { .wp-edit { grid-template-columns: 26px minmax(0, 1fr) 38px; } .wp-edit .wp-coords { grid-column: 2 / 3; grid-row: 2; } }
+.sheet-body { display: grid; gap: 10px; max-height: 62vh; overflow-y: auto; font-size: 14px; }
+.sketch-cap { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.mapstat { display: grid; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.mapstat-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; }
+.ready-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+.ready-list li { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.region-checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.region-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+.regions-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.region-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.region-row:first-child { border-top: 0; padding-top: 0; }
+.region-row .leg { grid-column: 1 / -1; }
+.warn-loud { background: var(--bad-soft); color: var(--bad); border: 2px solid var(--bad); border-radius: 8px; padding: 12px; display: grid; gap: 6px; font-size: 14px; }
+.warn-loud strong.big { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.05; text-transform: uppercase; letter-spacing: 0.01em; }
+details.more-maps { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; }
+details.more-maps > summary { cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--muted); }
+details.more-maps[open] { display: grid; gap: 10px; }
+details.more-maps[open] > summary { margin-bottom: 4px; }
+.btn.is-off { opacity: 0.45; }
+.wps li { grid-template-columns: 26px minmax(0, 1fr) auto; }
+.wp-copy { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 10px; font-size: 12.5px; font-weight: 600; color: var(--muted); align-self: center; }
+.setup-steps { display: grid; gap: 8px; }
+.copy-box { font-family: var(--font-mono); font-size: 13px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+details.setup-done { padding: 0; }
+details.setup-done > summary { list-style: none; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; font-weight: 600; }
+details.setup-done > summary::-webkit-details-marker { display: none; }
+details.setup-done > .setup-body { padding: 0 16px 16px; display: grid; gap: 14px; }
+.poi-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.poi-filter { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 10px 4px 8px; font-size: 12.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+.poi-filter[aria-pressed="false"] { opacity: 0.45; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.poi-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.poi-item { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 4px 10px; padding: 12px 0; border-top: 1px solid var(--line); }
+.poi-item:first-child { border-top: 0; }
+.poi-num { width: 26px; height: 26px; border-radius: 50%; color: #fff; display: grid; place-items: center; font: 600 12px var(--font-mono); }
+.poi-body { display: grid; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.poi-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.poi-acts { grid-column: 2; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.poi-edit { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; gap: 8px; background: var(--surface-2); min-width: 0; margin: 0; }
+.poi-edit-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+@media (max-width: 440px) { .poi-edit-row { grid-template-columns: minmax(0, 1fr); } }
+details.route { padding: 0; gap: 0; }
+details.route > summary { list-style: none; cursor: pointer; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; }
+details.route > summary::-webkit-details-marker { display: none; }
+details.route > summary .rcaret { color: var(--muted); font-size: 12px; transition: transform .15s; }
+details.route[open] > summary .rcaret { transform: rotate(90deg); }
+details.route > summary .rmeta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+details.route > .route-body { display: grid; gap: 10px; padding: 0 12px 12px; }
+.carousel { display: grid; gap: 8px; min-width: 0; }
+.car-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; gap: 8px; }
+.car-btn { height: 36px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font-size: 18px; line-height: 1; color: var(--ink); }
+.car-btn:disabled { opacity: 0.35; }
+.car-label { text-align: center; font-weight: 600; font-size: 14px; }
+.car-label small { display: block; color: var(--muted); font-weight: 500; font-size: 12px; }
+.car-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 0; min-width: 0; }
+.car-track::-webkit-scrollbar { display: none; }
+.car-slide { flex: 0 0 100%; scroll-snap-align: start; min-width: 0; display: grid; gap: 4px; position: relative; }
+.poi-dot { cursor: pointer; }
+.poi-pop { position: absolute; z-index: 3; width: min(220px, calc(100% - 8px)); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22); padding: 10px; display: grid; gap: 6px; }
+.poi-pop-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.poi-pop-head span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.poi-pop-head .poi-num { flex: none; }
+.poi-pop > * { min-width: 0; }
+.poi-pop .row { flex-wrap: nowrap; gap: 6px; }
+.poi-pop .row > .btn { flex: 1 1 0; min-width: 0; padding: 7px 6px; font-size: 13px; white-space: nowrap; }
+details.poi-card.flash { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fb-mini { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 8px; width: 30px; height: 28px; display: inline-grid; place-items: center; padding: 0; flex: none; }
+.head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.head-row h2, .head-row h3 { flex: 1; min-width: 0; }
+.fb-item { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--line); }
+.fb-item:first-child { border-top: 0; padding-top: 0; }
+.fb-item.done { opacity: 0.55; }
+.fb-item .fb-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 520px) { header.top .wrap { gap: 5px; } header.top .icon-btn { padding: 6px 7px; } header.top .brand { font-size: 20px; } }
+@media (max-width: 380px) { header.top .wrap { gap: 4px; } header.top .icon-btn { padding: 6px 5px; font-size: 12.5px; } header.top .theme-btn { padding: 6px 6px; } header.top .brand { font-size: 18px; } }
+.area-head { margin: 10px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.poi-list { grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 8px; }
+details.poi-card { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; }
+details.poi-card > summary { list-style: none; cursor: pointer; padding: 8px 10px; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; }
+details.poi-card > summary::-webkit-details-marker { display: none; }
+.poi-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.poi-type { grid-column: 2 / 4; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+details.poi-card .rcaret { color: var(--muted); font-size: 11px; transition: transform .15s; }
+details.poi-card[open] .rcaret { transform: rotate(90deg); }
+details.poi-card > .poi-detail { padding: 0 10px 10px; display: grid; gap: 6px; overflow-wrap: anywhere; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 3px solid transparent; outline: 1px solid var(--line); }
+.swatch[aria-pressed="true"] { border-color: var(--surface); outline: 2px solid var(--ink); }
+.newtype { border: 1px dashed var(--accent); border-radius: 8px; padding: 10px; display: grid; gap: 8px; }
+.type-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.type-row:first-child { border-top: 0; }
+.guide h4 { margin: 6px 0 0; font-size: 14px; }
+.guide ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+header.top .brand { white-space: nowrap; }
+#phoneChip { display: none; }   /* demo-only label; the lock screen shows which phone is which */
+.mine-form { display: grid; gap: 16px; }
+.mine-form > .panel > h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.01em; }
+details.route-edit { padding: 0; gap: 0; }
+details.route-edit > summary { list-style: none; cursor: pointer; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px; align-items: start; }
+details.route-edit > summary::-webkit-details-marker { display: none; }
+details.route-edit > summary .rcaret { color: var(--muted); font-size: 12px; transition: transform .15s; margin-top: 3px; }
+details.route-edit[open] > summary .rcaret { transform: rotate(90deg); }
+.rnote { grid-column: 1 / -1; font-size: 13px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+details.route-edit > .route-edit-body { display: grid; gap: 10px; padding: 0 12px 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.poi-edit { border-left-width: 5px; }
+.poi-edit-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13.5px; }
+.intent-doc h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.01em; margin: 6px 0 0; }
+.intent-doc h3:first-child { margin-top: 0; }
+.intent-doc p { max-width: 65ch; }
+.intent-doc ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.intent-box { max-height: 50vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: var(--surface-2); }
+#intentText { min-height: 22rem; font-size: 14px; line-height: 1.5; }
+.theme-btn { font-size: 15px; line-height: 1; padding: 6px 9px; }
+.theme-lock { display: flex; justify-content: center; }
+.map-wrap { position: relative; display: grid; gap: 4px; min-width: 0; }
+.route-pois { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--line); border-radius: 8px; }
+.near-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.near-list li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto 38px; gap: 8px; align-items: center; font-size: 13.5px; }
+.near-list input[type="checkbox"] { justify-self: center; }
+.rp-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; font-weight: 500; cursor: pointer; }
+.rp-toggle input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; flex: none; }
+.near-head { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto 38px; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.near-head span:last-child { text-align: center; }
+.near-list input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; }
+.near-list .poi-num { width: 22px; height: 22px; font-size: 11px; }
+.near-list .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Text that sits directly on the page background */
+main.wrap > h2, main.wrap > .head-row h2, main.wrap > .banner, main.wrap > ol.steps, main.wrap > ol.steps strong { color: var(--on-bg); }
+main.wrap > .lede, main.wrap > .meta, main.wrap > p.small, main.wrap > p.muted { color: var(--on-bg-muted); }
+#lockView > .lock-inner { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 14px; padding: 22px 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); }
+.section-title { font-family: var(--font-display); font-weight: 700; font-size: 21px; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.01em; }
+.select { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 100%; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<style>
+.upd-banner { position: fixed; left: 0; right: 0; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 8; display: flex; justify-content: center; padding: 0 max(12px, env(safe-area-inset-left, 0px)); }
+.upd-banner > div { background: var(--surface); color: var(--ink); border: 1px solid var(--accent); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; max-width: 520px; width: 100%; font-size: 14px; }
+.upd-banner span { flex: 1 1 180px; }
+</style>
+</head>
+<body>
+
+<div class="upd-banner" id="updBanner" hidden role="status"><div><span><strong>A new version of Rally Book is ready.</strong> Your plans stay as they are.</span><button class="btn btn-small btn-primary" type="button" id="updInstall">Install update</button><button class="btn btn-small" type="button" id="updLater">Later</button></div></div>
+<script>
+(function () {
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  var hadController = !!navigator.serviceWorker.controller, reloading = false;
+  function show(w) {
+    var b = document.getElementById('updBanner'); if (!b) return;
+    b.hidden = false;
+    document.getElementById('updInstall').onclick = function () { w.postMessage('install'); };
+    document.getElementById('updLater').onclick = function () { b.hidden = true; };
+  }
+  navigator.serviceWorker.register('sw.js').then(function (reg) {
+    if (reg.waiting && navigator.serviceWorker.controller) show(reg.waiting);
+    reg.addEventListener('updatefound', function () {
+      var w = reg.installing; if (!w) return;
+      w.addEventListener('statechange', function () { if (w.state === 'installed' && navigator.serviceWorker.controller) show(w); });
+    });
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (!hadController) { hadController = true; return; }   // first install: no reload needed
+    if (!reloading) { reloading = true; location.reload(); }
+  });
+  window.__rbCheckUpdate = function () {
+    return navigator.serviceWorker.getRegistration().then(function (r) {
+      if (!r) return 'unsupported';
+      return r.update().then(function () { return (r.waiting || r.installing) ? 'found' : 'none'; });
+    });
+  };
+})();
+</script>
+
+
+<div id="lockView" class="lock wrap"></div>
+
+<div id="appView" hidden>
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">Rally <span>Book</span></div>
+      <span class="chip" id="phoneChip"></span>
+      <button class="icon-btn theme-btn" type="button" data-act="theme" id="themeBtn" aria-label="Appearance: Auto">◐</button>
+      <button class="icon-btn theme-btn" type="button" data-act="feedback" aria-label="Send feedback or a request"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+      <button class="icon-btn" type="button" data-act="tab" data-arg="intent">Intent</button>
+      <button class="icon-btn" type="button" data-act="guide">Guide</button>
+      <button class="icon-btn" type="button" data-act="lock">Lock</button>
+    </div>
+  </header>
+  <main class="wrap" id="main"></main>
+  <nav class="tabs" aria-label="Sections">
+    <div class="inner" role="tablist">
+      <button type="button" role="tab" data-act="tab" data-arg="plans">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M4 12h16M4 19h10"/></svg>Plans</button>
+      <button type="button" role="tab" data-act="tab" data-arg="mine">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13 7l4 4"/></svg>My plan</button>
+      <button type="button" role="tab" data-act="tab" data-arg="import">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>Import</button>
+      <button type="button" role="tab" data-act="tab" data-arg="group">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.8 14.2c2.3.2 4 1.8 4.6 4.8"/></svg>Group</button>
+    </div>
+  </nav>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+<div id="sheet" class="sheet-back" hidden></div>
+
+<script>
+(() => {
+  // ---------------- Constants & sample data ----------------
+  const SLOT_PREFIX = 'rallybook2.phone.';
+  const SLOTS = ['p1', 'p2', 'p3', 'p4'];
+  const SLOT_LABEL = { p1: 'Phone 1', p2: 'Phone 2', p3: 'Phone 3', p4: 'Phone 4' };
+  const ITER = 200000;
+  const IDLE_MS = 5 * 60 * 1000;
+  const MAX_FAILS = 10;
+
+  const FIELDS = [
+    ['location', "Where I'll be"],
+    ['trigger', 'When I leave'],
+    ['rally1', 'Rally point 1 (fixed)'],
+    ['rally2', 'Rally point 2 (floater)'],
+    ['checkin', 'Check-in windows'],
+    ['leave', "What I'll leave behind"],
+    ['inreach', 'inReach message format'],
+  ];
+  const LABEL = Object.fromEntries(FIELDS);
+  LABEL.routes = 'Routes';
+  LABEL.pois = 'Points of interest';
+  const POI_TYPES = [
+    ['storage', 'Storage location'], ['associate', "Known associate's house"], ['business', 'Business'],
+    ['landmark', 'Landmark'], ['campground', 'Campground'], ['visited', 'Visited before'], ['other', 'Other'],
+  ];
+  const POI_LABEL = Object.fromEntries(POI_TYPES);
+  const APP_VERSION = '0.15';
+  const PKG_TTL = 48 * 3600000;   // restore packages work for 48 hours
+  const INTENT_START = `## Why we're doing this
+When the power, phones or internet go down for more than a day or two, the hardest part isn't gear. It's not knowing where everyone is or what they'll do. Rally Book is our agreement, written down ahead of time.
+
+## What we've agreed
+- Plan before it happens. Decisions made calmly now beat guesses made under stress.
+- If we can't reach each other, we follow the plans. Nobody waits for permission.
+- Each household owns its own plan and keeps it current.
+- No one person is required. Anyone can add, restore or help a teammate.
+- Keep it private. Plans stay encrypted and stay within the group.
+- Look after each other first, then neighbors, as we're able.
+
+## The scenario we plan for
+An outage of up to 90 days: no power, spotty or no cell service, and some of us away from home. Stay put for up to a week if it's safe, then move to fallback locations using the routes on our cards.
+
+## What we expect of each other
+- Review your card every few months.
+- Keep your offline maps downloaded and your devices charged.
+- Practice: drive a route, find a rally point, test a check-in.
+
+This is a starting draft. Edit it together.`;
+  const SWATCHES = [1, 2, 3, 4, 5, 6, 7, 8];
+  // Point types: built-in defaults plus group-made types (stored as group data, travel inside updates).
+  function customTypes() {
+    const out = [...((st && st.poiTypes) || [])];
+    ((draft && draft.newTypes) || []).forEach(t => { if (!out.some(x => x.id === t.id)) out.push(t); });
+    return out;
+  }
+  function typeInfo(t) {
+    if (POI_LABEL[t]) return { id: t, label: POI_LABEL[t], color: `var(--t-${t})`, builtin: true };
+    const c = customTypes().find(x => x.id === t);
+    if (c) return { id: t, label: c.name, color: `var(--c-${c.color})`, retired: !!c.retired };
+    return { id: 'other', label: 'Other', color: 'var(--t-other)', unknown: true };
+  }
+  const poiColor = (t) => typeInfo(t).color;
+  const typeIdFor = (name) => 'x:' + String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  function findTypeByName(name) {
+    const k = String(name).trim().toLowerCase();
+    const b = POI_TYPES.find(([, l]) => l.toLowerCase() === k);
+    if (b) return b[0];
+    const c = customTypes().find(x => x.name.trim().toLowerCase() === k);
+    return c ? c.id : null;
+  }
+  function mergeTypes(list) {
+    st.poiTypes = st.poiTypes || [];
+    (list || []).forEach(t => {
+      const i = st.poiTypes.findIndex(x => x.id === t.id);
+      if (i < 0) st.poiTypes.push({ ...t });
+      else if ((t.ts || 0) > (st.poiTypes[i].ts || 0)) st.poiTypes[i] = { ...t };
+    });
+  }
+  const emptyFields = () => Object.fromEntries(FIELDS.map(([k]) => [k, '']));
+
+  const SEED = [
+    { id: 'elias', slot: 'p1', name: 'Elias', rev: 3, ago: 6, fields: {
+      location: 'Home. Shelter in place up to 7 days.',
+      trigger: 'Grid down 72+ hours with no restore estimate, or water pressure lost. Then relocate to Site B.',
+      rally1: 'RP1: church lot at Main & 3rd. Wait 2 hrs. Recheck daily at 0800 and 1800.',
+      rally2: 'RP2: feed store on FM 4 (set per trip).',
+      checkin: 'Top of every hour, 0600 to 2100. Try Signal, then GMRS ch 16, then inReach to Dana.',
+      leave: 'Orange tape on mailbox post means we left for Site B. Note in coffee can under back steps.',
+      inreach: 'ELIAS / RP# or SITE / OK or HELP / MOVING hhmm' },
+      routes: [
+        { name: 'Primary to Site B', note: 'US-287 S to Cleburne, then US-67 W to Glen Rose. About 1 hr 30 min.', regions: ['Texas'], points: [
+          { label: 'Home (sample)', lat: 32.571, lon: -97.13 }, { label: 'Fuel stop, Cleburne', lat: 32.3476, lon: -97.3867 }, { label: 'Site B (sample), Glen Rose', lat: 32.2346, lon: -97.7553 }] },
+        { name: 'Alternate via Granbury', note: 'If 287 is blocked: west to Burleson, US-377 to Granbury, then south to Glen Rose.', regions: ['Texas'], points: [
+          { label: 'Home (sample)', lat: 32.571, lon: -97.13 }, { label: 'Burleson', lat: 32.5421, lon: -97.3208 }, { label: 'Granbury', lat: 32.4421, lon: -97.7942 }, { label: 'Site B (sample), Glen Rose', lat: 32.2346, lon: -97.7553 }] },
+      ],
+      pois: [
+        { type: 'storage', label: 'Storage unit (sample)', note: 'Unit 112. Water, fuel cans, spare batteries.', lat: 32.5905, lon: -97.1503 },
+        { type: 'landmark', label: 'Water tower (sample)', note: 'Visible from the main road. Easy meeting reference.', lat: 32.5642, lon: -97.121 },
+      ] },
+    { id: 'marcus', slot: 'p2', name: 'Marcus', rev: 2, ago: 12, fields: {
+      location: 'Home. Will move to in-laws if heat goes out in winter.',
+      trigger: 'Indoor temp under 50°F for 24 hrs, or unrest within 2 miles.',
+      rally1: 'RP1: church lot at Main & 3rd.',
+      rally2: 'RP2: none set.',
+      checkin: 'Top of every hour, 0600 to 2100.',
+      leave: 'Chalk X on the garage door frame, note in the grill.',
+      inreach: 'No inReach. Reachable through Dana.' },
+      routes: [
+        { name: 'To the in-laws', note: 'Back roads east. About 1 hr.', regions: ['Texas'], points: [
+          { label: 'Home (sample), Arlington', lat: 32.7357, lon: -97.1081 }, { label: 'Midlothian', lat: 32.4824, lon: -96.9945 }, { label: 'In-laws (sample), Waxahachie', lat: 32.3865, lon: -96.8483 }] },
+        { name: 'Alternate north then east', note: 'Highway north, then county road east. About 1 hr 15 min.', regions: ['Texas'], points: [
+          { label: 'Home (sample), Arlington', lat: 32.7357, lon: -97.1081 }, { label: 'Grand Prairie', lat: 32.7459, lon: -96.9978 }, { label: 'In-laws (sample), Waxahachie', lat: 32.3865, lon: -96.8483 }] },
+        { name: 'Phoenix to DFW (southern, I-10 / I-20)', note: 'Work-travel return route. About 15 hrs of driving; overnight in Midland if needed.', regions: ['Arizona', 'New Mexico', 'Texas'], points: [
+          { label: 'Phoenix', lat: 33.4484, lon: -112.074 }, { label: 'Tucson', lat: 32.2226, lon: -110.9747 }, { label: 'Las Cruces, NM', lat: 32.3199, lon: -106.7637 },
+          { label: 'El Paso', lat: 31.7619, lon: -106.485 }, { label: 'Midland', lat: 31.9973, lon: -102.0779 }, { label: 'Abilene', lat: 32.4487, lon: -99.7331 }, { label: 'Home (sample), Arlington', lat: 32.7357, lon: -97.1081 }] },
+      ],
+      pois: [
+        { type: 'campground', label: 'Cleburne State Park', note: 'Water and campsites. Fallback overnight spot.', lat: 32.2721, lon: -97.553 },
+        { type: 'associate', label: "Coworker's house (sample)", note: 'Knows our plan. Has a generator.', lat: 32.699, lon: -97.065 },
+        { type: 'storage', label: 'Work storage unit (sample), Phoenix', note: 'Spare fuel cans and water for the drive back.', lat: 33.4373, lon: -112.0078 },
+        { type: 'business', label: 'Truck stop (sample), Las Cruces', note: 'Open 24 hours. Halfway fuel stop.', lat: 32.3536, lon: -106.8226 },
+        { type: 'business', label: 'Motel (sample), Midland', note: 'Overnight stop on the Phoenix route.', lat: 31.9973, lon: -102.0779 },
+      ] },
+    { id: 'dana', slot: 'p3', name: 'Dana', rev: 3, ago: 3, fields: {
+      location: 'Home. Has the inReach and generator.',
+      trigger: 'Only leaves if the house is unsafe.',
+      rally1: 'RP1: church lot at Main & 3rd.',
+      rally2: 'RP2: her place is the default fallback.',
+      checkin: 'Top of every hour. Relays inReach messages to the group.',
+      leave: 'Will stay put. If gone, note taped inside the side gate.',
+      inreach: 'DANA / HOME or RP# / OK or HELP / RELAY: msg' },
+      routes: [
+        { name: 'Home to RP1', note: 'Main road. About 15 min.', regions: ['Texas'], points: [
+          { label: 'Home (sample)', lat: 32.646, lon: -97.117 }, { label: 'RP1 church lot (sample)', lat: 32.5632, lon: -97.1417 }] },
+      ],
+      pois: [
+        { type: 'business', label: 'Feed store (sample)', note: 'Owner trades fuel for work. Cash only.', lat: 32.474, lon: -97.023 },
+        { type: 'visited', label: 'Lake Whitney (visited before)', note: 'Camped a weekend there. Good fishing.', lat: 31.869, lon: -97.359 },
+      ] },
+  ];
+
+  // ---------------- Session state ----------------
+  let slot = 'p1';
+  let draft = null;           // unsaved edits on the My plan tab
+  let pwKey = null, salt = null, st = null;
+  let storageOk = true;
+  const mem = {};
+  let lastActivity = Date.now();
+
+  let lockMode = 'unlock', lockErr = '', confirmErase = false;
+  let tab = 'plans';
+  let pending = null, importMsg = null, groupMsg = null, lastOutput = null, confirmRemove = null;
+  let outbox = null;          // demo stand-in for "the last thing posted to Signal"
+  let outboxRestore = null;   // demo stand-in for "package + code handed over in person"
+
+  // ---------------- Helpers ----------------
+  const S = crypto.subtle;
+  const te = new TextEncoder(), td = new TextDecoder();
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (ts) => new Date(ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const rand = (n) => crypto.getRandomValues(new Uint8Array(n));
+  function b64(u8) { let s = ''; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return btoa(s); }
+  function unb64(s) { const bin = atob(s); const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); return u8; }
+  function cat(...parts) { const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let i = 0; for (const p of parts) { out.set(p, i); i += p.length; } return out; }
+  const clean = ({ key_ops, ext, ...rest }) => rest;
+
+  async function pbkdf(pass, saltBytes) {
+    const base = await S.importKey('raw', te.encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return S.deriveKey({ name: 'PBKDF2', salt: saltBytes, iterations: ITER, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  async function aesSeal(key, bytes) { const iv = rand(12); return cat(iv, new Uint8Array(await S.encrypt({ name: 'AES-GCM', iv }, key, bytes))); }
+  async function aesOpen(key, u8) { return new Uint8Array(await S.decrypt({ name: 'AES-GCM', iv: u8.slice(0, 12) }, key, u8.slice(12))); }
+  const groupKey = (raw) => S.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']);
+
+  async function genPair(kind) {
+    const alg = { name: kind === 'sign' ? 'ECDSA' : 'ECDH', namedCurve: 'P-256' };
+    const kp = await S.generateKey(alg, true, kind === 'sign' ? ['sign', 'verify'] : ['deriveKey']);
+    return { priv: clean(await S.exportKey('jwk', kp.privateKey)), pub: clean(await S.exportKey('jwk', kp.publicKey)) };
+  }
+  async function signWith(privJwk, payload) {
+    const k = await S.importKey('jwk', privJwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+    return b64(new Uint8Array(await S.sign({ name: 'ECDSA', hash: 'SHA-256' }, k, te.encode(JSON.stringify(payload)))));
+  }
+  async function verifyWith(pubJwk, payload, sig) {
+    try {
+      const k = await S.importKey('jwk', pubJwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+      return await S.verify({ name: 'ECDSA', hash: 'SHA-256' }, k, unb64(sig), te.encode(JSON.stringify(payload)));
+    } catch { return false; }
+  }
+  async function dhKey(privJwk, pubJwk) {
+    const priv = await S.importKey('jwk', privJwk, { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveKey']);
+    const pub = await S.importKey('jwk', pubJwk, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+    return S.deriveKey({ name: 'ECDH', public: pub }, priv, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  async function fingerprint(pub) {
+    if (!pub) return 'no key on file';
+    const h = new Uint8Array(await S.digest('SHA-256', te.encode(pub.x + '.' + pub.y)));
+    const hex = [...h.slice(0, 4)].map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    return hex.slice(0, 4) + ' ' + hex.slice(4);
+  }
+  const CODE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  function makeCode() {
+    let out = '';
+    while (out.length < 9) { for (const b of rand(16)) { if (b < 248 && out.length < 9) out += CODE_ABC[b % 31]; } }
+    return out.slice(0, 3) + '-' + out.slice(3, 6) + '-' + out.slice(6);
+  }
+  const normCode = (c) => String(c).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  // ---------------- Storage ----------------
+  function slotRead(id) {
+    try { const v = localStorage.getItem(SLOT_PREFIX + id); return v ? JSON.parse(v) : null; }
+    catch { storageOk = false; return mem[id] || null; }
+  }
+  function slotWrite(id, rec) { mem[id] = rec; try { localStorage.setItem(SLOT_PREFIX + id, JSON.stringify(rec)); } catch { storageOk = false; } }
+  function slotClear(id) { delete mem[id]; try { localStorage.removeItem(SLOT_PREFIX + id); } catch {} }
+
+  const me = () => st.roster.find(r => r.id === st.member);
+  const person = (id) => st.roster.find(r => r.id === id);
+
+  async function saveSt() {
+    const box = await aesSeal(pwKey, te.encode(JSON.stringify(st)));
+    slotWrite(slot, { v: 2, name: me().name, salt: b64(salt), box: b64(box) });
+  }
+
+  // Envelope: RALLY2.<key generation>.<base64(iv + ciphertext)>, inner payload signed by sender's phone
+  async function sealPacket(payload) {
+    payload = { app: APP_VERSION, ...payload };
+    const sig = await signWith(st.signPriv, payload);
+    const gk = await groupKey(unb64(st.keys[st.epoch]));
+    const body = await aesSeal(gk, te.encode(JSON.stringify({ p: payload, s: sig })));
+    return `RALLY2.${st.epoch}.${b64(body)}`;
+  }
+
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 2800);
+  }
+
+  // ---------------- Routes & coordinates ----------------
+  const letter = (i) => String.fromCharCode(65 + i);
+  function parseCoords(str) {
+    const t = String(str).trim();
+    const re = /(-?\d+(?:\.\d+)?)\s*°?\s*([NSEWnsew])?/g;
+    const found = []; let mm;
+    while ((mm = re.exec(t)) && found.length < 3) found.push(mm);
+    if (found.length !== 2) return { error: 'enter latitude and longitude, like 32.5632, -97.1417.' };
+    let lat = parseFloat(found[0][1]), lon = parseFloat(found[1][1]);
+    const h1 = (found[0][2] || '').toUpperCase(), h2 = (found[1][2] || '').toUpperCase();
+    if (h1 === 'S') lat = -Math.abs(lat);
+    if (h2 === 'W') lon = -Math.abs(lon);
+    if (h1 === 'E' || h1 === 'W' || h2 === 'N' || h2 === 'S') return { error: 'put latitude (N/S) first, then longitude (E/W).' };
+    if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+      return { error: Math.abs(lat) <= 180 && Math.abs(lon) <= 90 ? 'these look swapped. Latitude comes first.' : "those numbers aren't valid coordinates." };
+    }
+    return { lat: +lat.toFixed(5), lon: +lon.toFixed(5) };
+  }
+  const fmtLL = (p) => `${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}`;
+  function miles(a, b) {
+    const R = 3958.8, rad = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  function compass(a, b) {
+    const rad = Math.PI / 180;
+    const y = Math.sin((b.lon - a.lon) * rad) * Math.cos(b.lat * rad);
+    const x = Math.cos(a.lat * rad) * Math.sin(b.lat * rad) - Math.sin(a.lat * rad) * Math.cos(b.lat * rad) * Math.cos((b.lon - a.lon) * rad);
+    const deg = (Math.atan2(y, x) / rad + 360) % 360;
+    return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(deg / 45) % 8];
+  }
+  const mi = (d) => d < 10 ? d.toFixed(1) + ' mi' : Math.round(d) + ' mi';
+  const routeTotal = (pts) => pts.slice(1).reduce((t, p, i) => t + miles(pts[i], p), 0);
+
+  // Map regions: which offline map regions (in Organic Maps) a route needs. Tagged by the route's owner.
+  // The group's offline map list is set by the app (west to east). Adding a region = app update.
+  const BASE_REGIONS = ['Arizona', 'New Mexico', 'Texas'];
+  const REGION_NOTES = { arizona: 'Phoenix and south is enough', 'new mexico': 'Southern half is enough (I-10 side)', texas: 'All of it' };
+  const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'];
+  const rkey = (name) => String(name).trim().toLowerCase();
+  function knownRegions() {
+    const seen = new Map();
+    const addName = (n) => { const k = rkey(n); if (k && !seen.has(k)) seen.set(k, String(n).trim()); };
+    BASE_REGIONS.forEach(addName);
+    (st?.roster || []).forEach(m => (m.routes || []).forEach(r => (r.regions || []).forEach(addName)));
+    (draft?.routes || []).forEach(r => (r.regions || []).forEach(addName));
+    return [...seen.values()];
+  }
+  const regionDone = (name) => !!(st.regionsDone || {})[rkey(name)];
+
+  // ---------- Approximate reference geography (hand-built, for orientation only) ----------
+  const GEO = {
+    states: [
+      ['ARIZONA', [[-114.82,32.49],[-111.07,31.33],[-109.05,31.33],[-109.05,37],[-114.05,37],[-114.05,36.2],[-114.75,35.1],[-114.6,34.8],[-114.4,34.1],[-114.75,33.4],[-114.5,33],[-114.82,32.49]]],
+      ['NEW MEXICO', [[-109.05,31.33],[-108.21,31.33],[-108.21,31.78],[-106.53,31.78],[-106.62,32],[-103.06,32],[-103.04,36.5],[-103,37],[-109.05,37],[-109.05,31.33]]],
+      ['OKLAHOMA', [[-103,37],[-94.62,37],[-94.43,35.4],[-94.48,33.64],[-95.3,33.88],[-96.4,33.75],[-97.15,33.72],[-97.9,33.88],[-98.6,34.15],[-99.2,34.3],[-99.7,34.4],[-100,34.56],[-100,36.5],[-103,36.5],[-103,37]]],
+      ['TEXAS', [[-106.53,31.78],[-106.62,32],[-103.06,32],[-103.04,36.5],[-100,36.5],[-100,34.56],[-99.7,34.4],[-99.2,34.3],[-98.6,34.15],[-97.9,33.88],[-97.15,33.72],[-96.4,33.75],[-95.3,33.88],[-94.48,33.64],[-94.04,33.55],[-94.04,31.99],[-93.6,31],[-93.84,29.7],[-94.7,29.35],[-95.5,28.8],[-96.6,28.3],[-97.3,27.6],[-97.4,26.8],[-97.15,25.95],[-97.6,26],[-98.6,26.25],[-99.2,26.9],[-99.5,27.5],[-100.3,28.3],[-100.7,29.1],[-101.4,29.77],[-102.4,29.8],[-102.8,29.25],[-103.3,29],[-104,29.3],[-104.7,30],[-105,30.7],[-105.8,31.2],[-106.53,31.78]]],
+      ['ARKANSAS', [[-94.62,36.5],[-90.15,36.5],[-90.2,35],[-91,33],[-94.04,33.02],[-94.04,33.55],[-94.48,33.64],[-94.43,35.4],[-94.62,36.5]]],
+      ['LOUISIANA', [[-94.04,33.02],[-91.17,33],[-91.6,31],[-89.7,31],[-89.4,30.1],[-89.6,29.2],[-91.3,29.3],[-93.84,29.7],[-93.6,31],[-94.04,31.99],[-94.04,33.02]]],
+    ],
+    cities: [
+      ['Dallas',32.7767,-96.797,1],['Fort Worth',32.7555,-97.3308,1],['Austin',30.2672,-97.7431,1],['San Antonio',29.4241,-98.4936,1],['Houston',29.7604,-95.3698,1],
+      ['El Paso',31.7619,-106.485,1],['Oklahoma City',35.4676,-97.5164,1],['Tulsa',36.154,-95.9928,1],['Albuquerque',35.0844,-106.6504,1],['Phoenix',33.4484,-112.074,1],
+      ['Tucson',32.2226,-110.9747,1],['Little Rock',34.7465,-92.2896,1],
+      ['Denton',33.2148,-97.1331,2],['Waco',31.5493,-97.1467,2],['Tyler',32.3513,-95.3011,2],['Wichita Falls',33.9137,-98.4934,2],['Abilene',32.4487,-99.7331,2],
+      ['Midland',31.9973,-102.0779,2],['Lubbock',33.5779,-101.8552,2],['Amarillo',35.222,-101.8313,2],['Lawton',34.6036,-98.3959,2],['Santa Fe',35.687,-105.9378,2],
+      ['Las Cruces',32.3199,-106.7637,2],['Flagstaff',35.1983,-111.6513,2],['Shreveport',32.5252,-93.7502,2],
+      ['Arlington',32.7357,-97.1081,3],['Mansfield',32.5632,-97.1417,3],['Cleburne',32.3476,-97.3867,3],['Weatherford',32.7593,-97.7973,3],['Waxahachie',32.3865,-96.8483,3],
+      ['Granbury',32.4421,-97.7942,3],['Glen Rose',32.2346,-97.7553,3],['Midlothian',32.4824,-96.9945,3],['Sherman',33.6357,-96.6089,3],['Texarkana',33.4418,-94.0377,3],
+      ['Durant',33.994,-96.3708,3],['McAlester',34.9334,-95.7697,3],['Tahlequah',35.9154,-94.97,3],['Roswell',33.3943,-104.523,3],['Deming',32.2687,-107.7586,3],
+      ['Lordsburg',32.3503,-108.7087,3],['Mesa',33.4152,-111.8315,3],['Pecos',31.4229,-103.4932,3],['Fort Stockton',30.894,-102.8793,3],['Van Horn',31.0399,-104.8307,3],
+      ['Hot Springs',34.5037,-93.0552,3],['Del Rio',29.3627,-100.8968,2],['Alpine',30.3585,-103.661,3],['Presidio',29.5607,-104.3721,3],['San Angelo',31.4638,-100.437,2],['Odessa',31.8457,-102.3676,3],['Big Bend NP',29.25,-103.25,3],['Willcox',32.2529,-109.832,3],
+    ],
+    highways: [
+      ['I-20', [[-104.25,31.08],[-103.49,31.42],[-102.08,32.0],[-99.73,32.45],[-97.8,32.76],[-97.33,32.76],[-96.8,32.78],[-95.3,32.35],[-93.75,32.53]]],
+      ['I-10', [[-114.6,33.6],[-112.07,33.45],[-110.97,32.22],[-110.29,31.97],[-109.83,32.25],[-108.71,32.35],[-107.76,32.27],[-106.76,32.32],[-106.49,31.76],[-104.83,31.04],[-102.88,30.89],[-100.6,30.55],[-98.49,29.42],[-95.37,29.76],[-93.8,30.1]]],
+      ['I-40', [[-114.6,34.8],[-111.65,35.2],[-109.2,35.1],[-106.65,35.08],[-103.7,35.17],[-101.83,35.22],[-99.4,35.4],[-97.52,35.47],[-94.4,35.39],[-92.29,34.75]]],
+      ['I-35', [[-99.5,27.5],[-98.49,29.42],[-97.74,30.27],[-97.15,31.55],[-97.13,32.0],[-97.33,32.76],[-97.13,33.21],[-97.13,33.63],[-97.52,35.47],[-97.3,37]]],
+      ['I-35E', [[-97.13,32.0],[-96.85,32.39],[-96.8,32.78],[-97.13,33.21]]],
+      ['I-45', [[-96.8,32.78],[-96.17,31.72],[-95.37,29.76]]],
+      ['I-30', [[-97.33,32.76],[-96.8,32.78],[-95.6,33.13],[-94.04,33.44],[-92.29,34.75]]],
+      ['US-287', [[-101.83,35.22],[-100.2,34.43],[-98.49,33.91],[-97.33,32.76],[-97.14,32.56],[-96.85,32.39]]],
+      ['I-25', [[-106.76,32.32],[-107.25,33.13],[-106.65,35.08],[-105.94,35.69],[-104.6,37]]],
+      ['I-17', [[-112.07,33.45],[-111.65,35.2]]],
+      ['I-44', [[-98.49,33.91],[-98.4,34.6],[-97.52,35.47],[-95.99,36.15],[-94.6,36.9]]],
+      ['US-75', [[-96.8,32.78],[-96.61,33.64],[-96.37,33.99],[-95.77,34.93],[-95.37,35.75]]],
+      ['US-67', [[-96.8,32.78],[-96.99,32.48],[-97.39,32.35],[-97.76,32.23]]],
+      ['US-377', [[-97.33,32.76],[-97.79,32.44]]],
+      ['US-90', [[-104.83,31.04],[-103.66,30.36],[-102.4,30.15],[-100.9,29.36],[-98.49,29.42]]],
+      ['US-385', [[-102.37,31.85],[-102.88,30.89],[-103.25,29.6]]],
+    ],
+  };
+  // Builds a projection that fits `pts` (with a minimum span so towns and highways give context).
+  function makeView(pts, minSpanLat, W, H, pad) {
+    const lats = pts.map(p => p.lat), lons = pts.map(p => p.lon);
+    const cLat = (Math.min(...lats) + Math.max(...lats)) / 2, cLon = (Math.min(...lons) + Math.max(...lons)) / 2;
+    const kx = Math.cos(cLat * Math.PI / 180);
+    const spanY = Math.max(Math.max(...lats) - Math.min(...lats), minSpanLat);
+    const spanX = Math.max((Math.max(...lons) - Math.min(...lons)) * kx, minSpanLat * (W / H) * 0.6);
+    const sc = Math.min((W - 2 * pad) / spanX, (H - 2 * pad) / spanY);
+    const proj = (lat, lon) => [W / 2 + (lon - cLon) * kx * sc, H / 2 - (lat - cLat) * sc];
+    const inv = (x, y) => ({ lat: cLat - (y - H / 2) / sc, lon: cLon + (x - W / 2) / (kx * sc) });
+    return { proj, inv, sc, W, H, spanLatShown: H / sc };
+  }
+  function baseMap(v, avoid = []) {
+    const { proj, W, H } = v, inside = (x, y, m = 0) => x >= -m && x <= W + m && y >= -m && y <= H + m;
+    const span = v.spanLatShown;
+    const maxPri = span > 9 ? 1 : span > 4.5 ? 2 : 3;
+    let out = '';
+    GEO.states.forEach(([name, ring]) => {
+      const pts = ring.map(([lon, lat]) => proj(lat, lon));
+      out += `<polygon points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="var(--map-land)" stroke="var(--map-border)" stroke-width="1" stroke-dasharray="4 3"/>`;
+    });
+    GEO.states.forEach(([name, ring]) => {
+      const cx = ring.reduce((t, p) => t + p[0], 0) / ring.length, cy = ring.reduce((t, p) => t + p[1], 0) / ring.length;
+      const [x, y] = proj(cy, cx);
+      if (inside(x, y, -20)) out += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="2" fill="var(--map-state)" font-family="var(--font-body)">${name}</text>`;
+    });
+    const boxes = avoid.map(a => Array.isArray(a) ? { x: a[0] - 12, y: a[1] - 12, w: 24, h: 24 } : a);
+    const free = (x, y, w, h) => !boxes.some(b => x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y);
+    const hwLabels = [];
+    GEO.highways.forEach(([name, line]) => {
+      const pts = line.map(([lon, lat]) => proj(lat, lon));
+      out += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--map-road)" stroke-width="1.8" stroke-linejoin="round"/>`;
+      const mids = [];
+      for (let i = 1; i < pts.length; i++) { const mx = (pts[i - 1][0] + pts[i][0]) / 2, my = (pts[i - 1][1] + pts[i][1]) / 2; if (inside(mx, my, -18)) mids.push([mx, my]); }
+      if (mids.length) hwLabels.push({ name, mids });
+    });
+    let cityOut = '';
+    GEO.cities.filter(c => c[3] <= maxPri).sort((a, b) => a[3] - b[3]).forEach(([name, lat, lon, pri]) => {
+      const [x, y] = proj(lat, lon);
+      if (!inside(x, y, -4)) return;
+      cityOut += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${pri === 1 ? 3 : 2.2}" fill="var(--map-city)"/>`;
+      const w = name.length * 5.4, h = 11;
+      const spots = [[x + 5, y - 7], [x - 5 - w, y - 7], [x - w / 2, y + 4], [x - w / 2, y - 17]];
+      const spot = spots.find(([lx, ly]) => lx > 2 && lx + w < W - 2 && ly > 2 && ly + h < H - 2 && free(lx, ly, w, h));
+      if (!spot) return;
+      boxes.push({ x: spot[0], y: spot[1], w, h });
+      cityOut += `<text x="${spot[0].toFixed(1)}" y="${(spot[1] + 9).toFixed(1)}" font-size="${pri === 1 ? 10 : 9}" font-weight="${pri === 1 ? 600 : 500}" fill="var(--map-city)" font-family="var(--font-body)" paint-order="stroke" stroke="var(--map-land)" stroke-width="3">${name}</text>`;
+    });
+    let hwOut = '';
+    hwLabels.forEach(({ name, mids }) => {
+      const w = name.length * 5.6 + 8, h = 12;
+      const order = mids.map((m, i) => [m, Math.abs(i - (mids.length - 1) / 2)]).sort((a, b) => a[1] - b[1]).map(x => x[0]);
+      const at = order.find(([x, y]) => free(x - w / 2, y - h / 2, w, h));
+      if (!at) return;
+      const [x, y] = at;
+      boxes.push({ x: x - w / 2, y: y - h / 2, w, h });
+      hwOut += `<rect x="${(x - w / 2).toFixed(1)}" y="${(y - h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h}" rx="3" fill="var(--surface)" stroke="var(--map-road)"/>
+        <text x="${x.toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="600" fill="var(--muted)" font-family="var(--font-mono)">${name}</text>`;
+    });
+    out += hwOut + cityOut;
+    return out;
+  }
+  // Locator inset: Arizona, New Mexico and Texas in miniature, with a box showing where the main map is.
+  const INSET = { x: 8, y: 8, w: 104, h: 74, s: 25.6, n: 37.4, w0: -115.2, e: -93.2 };
+  // Pick the emptiest corner for the inset: top-left, then bottom-right, then bottom-left.
+  function insetCorner(v, marks) {
+    const W = v.W, H = v.H, iw = INSET.w + 22, ih = INSET.h + 22;
+    const corners = [
+      { name: 'tl', x: 8, y: 8, box: [0, 0, iw, ih] },
+      { name: 'br', x: W - INSET.w - 8, y: H - INSET.h - 8, box: [W - iw, H - ih, W, H] },
+      { name: 'bl', x: 8, y: H - INSET.h - 8, box: [0, H - ih, iw, H] },
+    ];
+    const count = (c) => marks.filter(([x, y]) => x >= c.box[0] && x <= c.box[2] && y >= c.box[1] && y <= c.box[3]).length;
+    return corners.reduce((best, c) => count(c) < count(best) ? c : best, corners[0]);
+  }
+  function insetMap(v, pos) {
+    const X = pos ? pos.x : INSET.x, Y = pos ? pos.y : INSET.y;
+    const kx = Math.cos(31.5 * Math.PI / 180);
+    const sc = Math.min(INSET.w / ((INSET.e - INSET.w0) * kx), INSET.h / (INSET.n - INSET.s));
+    const cx = (INSET.w0 + INSET.e) / 2, cy = (INSET.s + INSET.n) / 2;
+    const pr = (lat, lon) => [X + INSET.w / 2 + (lon - cx) * kx * sc, Y + INSET.h / 2 - (lat - cy) * sc];
+    const states = GEO.states.map(([, ring]) => `<polygon points="${ring.map(([lon, lat]) => pr(lat, lon).map(n => n.toFixed(1)).join(',')).join(' ')}" fill="var(--map-land)" stroke="var(--map-border)" stroke-width="0.6"/>`).join('');
+    const tl = v.inv(0, 0), br = v.inv(v.W, v.H);
+    const [x1, y1] = pr(tl.lat, tl.lon), [x2, y2] = pr(br.lat, br.lon);
+    let bx = Math.max(X, x1), by = Math.max(Y, y1), bw = Math.min(X + INSET.w, x2) - bx, bh = Math.min(Y + INSET.h, y2) - by;
+    if (bw < 6) { bx -= (6 - bw) / 2; bw = 6; } if (bh < 6) { by -= (6 - bh) / 2; bh = 6; }
+    return `<g aria-hidden="true">
+      <clipPath id="insetClip${Math.round(x1 * 10)}${Math.round(y1 * 10)}"><rect x="${X}" y="${Y}" width="${INSET.w}" height="${INSET.h}" rx="4"/></clipPath>
+      <rect x="${X - 1.5}" y="${Y - 1.5}" width="${INSET.w + 3}" height="${INSET.h + 3}" rx="5" fill="var(--surface)" stroke="var(--line)"/>
+      <g clip-path="url(#insetClip${Math.round(x1 * 10)}${Math.round(y1 * 10)})"><rect x="${X}" y="${Y}" width="${INSET.w}" height="${INSET.h}" fill="var(--map-water)"/>${states}</g>
+      <rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.6"/>
+      <text x="${X + 4}" y="${Y + INSET.h - 4}" font-size="7.5" font-weight="600" letter-spacing="0.5" fill="var(--muted)" font-family="var(--font-body)">AZ · NM · TX</text>
+    </g>`;
+  }
+  function mapFrame(v, inner, label, avoid = [], withInset = false) {
+    const { W, H, sc } = v;
+    const miPerPx = 69.0 / sc;
+    const nice = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
+    const barMi = nice.find(n => n / miPerPx >= 40) || nice[nice.length - 1];
+    const barPx = barMi / miPerPx;
+    const corner = withInset ? insetCorner(v, avoid.filter(Array.isArray)) : null;
+    const barX = corner && corner.name === 'bl' ? W - barPx - 60 : 10;
+    return `<svg class="sketch" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)}">
+      <rect x="0" y="0" width="${W}" height="${H}" fill="var(--map-water)"/>
+      ${baseMap(v, corner ? avoid.concat([{ x: corner.x - 6, y: corner.y - 6, w: INSET.w + 12, h: INSET.h + 12 }]) : avoid)}
+      ${inner}
+      ${corner ? insetMap(v, corner) : ''}
+      <g transform="translate(${W - 16},16)"><path d="M0,-8 L5,6 L0,3 L-5,6 Z" fill="var(--ink)"/><text x="0" y="18" text-anchor="middle" font-size="10" font-weight="600" fill="var(--ink)" font-family="var(--font-body)">N</text></g>
+      <g transform="translate(${barX.toFixed(1)},${H - 12})"><rect x="-4" y="-9" width="${(barPx + 50).toFixed(1)}" height="16" rx="3" fill="var(--surface)" opacity="0.85"/>
+        <line x1="0" y1="0" x2="${barPx.toFixed(1)}" y2="0" stroke="var(--ink)" stroke-width="2"/>
+        <line x1="0" y1="-4" x2="0" y2="4" stroke="var(--ink)" stroke-width="1.5"/><line x1="${barPx.toFixed(1)}" y1="-4" x2="${barPx.toFixed(1)}" y2="4" stroke="var(--ink)" stroke-width="1.5"/>
+        <text x="${(barPx + 6).toFixed(1)}" y="4" font-size="10" fill="var(--muted)" font-family="var(--font-mono)">${barMi} mi</text></g>
+    </svg>
+    <p class="sketch-cap">Background map is approximate, for orientation only.</p>`;
+  }
+  function spreadOverlaps(xy, minD) {
+    const used = new Array(xy.length).fill(false);
+    for (let i = 0; i < xy.length; i++) {
+      if (used[i]) continue;
+      const group = [i];
+      for (let j = i + 1; j < xy.length; j++) if (!used[j] && Math.hypot(xy[j][0] - xy[i][0], xy[j][1] - xy[i][1]) < minD) group.push(j);
+      if (group.length > 1) {
+        const gx = group.reduce((t, k) => t + xy[k][0], 0) / group.length, gy = group.reduce((t, k) => t + xy[k][1], 0) / group.length;
+        const rad = 11 + group.length * 2;
+        group.forEach((k, n) => { const a = -Math.PI / 2 + n * 2 * Math.PI / group.length; xy[k] = [gx + rad * Math.cos(a), gy + rad * Math.sin(a)]; used[k] = true; });
+      }
+    }
+    return xy;
+  }
+
+  // Route map: waypoints and the planned line on top of the reference map.
+  // Zoom rule: shorter routes get a closer view, so nearby points are easier to tell apart.
+  // Route maps fit the route itself so it fills most of the view (min ~17 mi tall for very short routes).
+  const routeMinSpan = () => 0.14;   // about 10 miles top to bottom at the closest
+  function sketch(pts, pois = []) {
+    // Extra padding on the left/top keeps the route clear of the locator inset.
+    const v = makeView(pts.concat(pois), routeMinSpan(pts), 320, 220, 30);
+    const xy = pts.map(p => v.proj(p.lat, p.lon));
+    const pxy = spreadOverlaps(pois.map(p => v.proj(p.lat, p.lon)), 16);
+    const line = xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const inner = `${pts.length > 1 ? `<polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
+      ${pois.map((p, i) => `<g class="poi-dot" data-act="poiPop" data-arg="${p.owner.id}|${p.idx}|${p.num}" data-x="${pxy[i][0].toFixed(1)}" data-y="${pxy[i][1].toFixed(1)}" role="button" aria-label="Point ${p.num}: ${esc(p.label)}">
+        <circle cx="${pxy[i][0].toFixed(1)}" cy="${pxy[i][1].toFixed(1)}" r="15" fill="transparent"/>
+        <rect x="${(pxy[i][0] - 8).toFixed(1)}" y="${(pxy[i][1] - 8).toFixed(1)}" width="16" height="16" rx="4" fill="${poiColor(p.type)}" stroke="var(--surface)" stroke-width="1.5"/>
+        <text x="${pxy[i][0].toFixed(1)}" y="${(pxy[i][1] + 3.5).toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="600" font-family="var(--font-mono)" fill="#fff">${p.num}</text></g>`).join('')}
+      ${xy.map((p, i) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="9" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>
+        <text x="${p[0].toFixed(1)}" y="${(p[1] + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" font-family="var(--font-mono)" fill="var(--accent-ink)">${letter(i)}</text>`).join('')}`;
+    return mapFrame(v, inner, `Route map, ${pts.length} waypoints${pois.length ? ` and ${pois.length} nearby points of interest` : ''}, with approximate state lines, highways and cities, and a small locator map showing where this is in Arizona, New Mexico and Texas. North is up.`, xy.concat(pxy), true);
+  }
+
+  // ---------- Points of interest near a route ----------
+  const NEAR_MI = 10;
+  let routePoiOn = new Set(), routePoiHidden = new Map(), routePoiPick = new Map();   // view-only, not saved
+  const pickedPois = (key, pts) => { const sel = routePoiPick.get(key); if (!sel || !sel.size) return []; return nearbyPois(pts).filter(p => sel.has(`${p.owner.id}|${p.idx}`)).sort((a, b) => a.num - b.num); };
+  function distToRoute(p, pts) {
+    if (pts.length === 1) return miles(p, pts[0]);
+    const kx = Math.cos(p.lat * Math.PI / 180), M = 69.0;
+    const toXY = q => [(q.lon - p.lon) * kx * M, (q.lat - p.lat) * M];
+    let best = Infinity;
+    for (let i = 1; i < pts.length; i++) {
+      const [ax, ay] = toXY(pts[i - 1]), [bx, by] = toXY(pts[i]);
+      const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
+      const t = L ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L)) : 0;
+      best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+    }
+    return best;
+  }
+  function nearbyPois(pts) {
+    return allPois().map(p => ({ ...p, away: distToRoute(p, pts) })).filter(p => p.away <= NEAR_MI);
+  }
+  function routePoiBlock(key, pts, near) {
+    const on = routePoiOn.has(key);
+    const hidden = routePoiHidden.get(key) || new Set();
+    const seenT = new Map();
+    near.forEach(p => { const ti = typeInfo(p.type); if (!seenT.has(ti.id)) seenT.set(ti.id, ti); });
+    const shown = near.filter(p => !hidden.has(typeInfo(p.type).id)).sort((a, b) => a.away - b.away);
+    return `
+      <div class="route-pois">
+        <label class="rp-toggle"><span>Show points of interest near this route <span class="leg">(within ${NEAR_MI} mi)</span></span><input type="checkbox" data-act="rpToggle" data-arg="${esc(key)}" ${on ? 'checked' : ''}></label>
+        ${!on ? '' : !near.length ? `<p class="small muted">No points of interest within ${NEAR_MI} miles of this route.</p>` : `
+          <div class="poi-filters" role="group" aria-label="Show or hide types near this route">
+            ${[...seenT.values()].map(ti => `<button class="poi-filter" type="button" data-act="rpFilter" data-arg="${esc(key)}|${esc(ti.id)}" aria-pressed="${!hidden.has(ti.id)}"><span class="dot" style="background:${ti.color}"></span>${esc(ti.label)}</button>`).join('')}
+          </div>
+          ${shown.length ? `<div class="near-head" aria-hidden="true"><span></span><span>Point</span><span>Distance</span><span>Bring</span></div><ol class="near-list">${shown.map(p => `
+            <li><span class="poi-num" style="background:${poiColor(p.type)}" aria-hidden="true">${p.num}</span><span class="nm">${esc(p.label)}</span><span class="leg">${p.away < 0.5 ? 'on route' : mi(p.away) + ' away'}</span><input type="checkbox" data-act="rpPick" data-arg="${esc(key)}|${p.owner.id}|${p.idx}" ${(routePoiPick.get(key) || new Set()).has(`${p.owner.id}|${p.idx}`) ? 'checked' : ''} aria-label="Bring ${esc(p.label)} along when copying or opening this route"></li>`).join('')}</ol>`
+            : '<p class="small muted">All types are hidden for this route.</p>'}
+          <p class="small muted">${shown.length} of ${near.length} nearby ${near.length === 1 ? 'point' : 'points'} shown. Check the ones you want to bring along when you copy this route or open it in Organic Maps.</p>
+          ${(() => { const n = pickedPois(key, pts).length; return n ? `<div class="row"><button class="btn btn-small btn-primary" type="button" data-act="copyRoutePlus" data-arg="${esc(key)}">Copy route + ${n} selected ${n === 1 ? 'point' : 'points'}</button><button class="btn btn-small btn-quiet" type="button" data-act="rpClear" data-arg="${esc(key)}">Clear selection</button></div>` : ''; })()}`}
+      </div>`;
+  }
+
+  function regionsLine(r) {
+    const regs = r.regions || [];
+    if (!regs.length) return '<div class="regions-line"><span class="label">Map regions</span><span class="chip chip-bad">Not set</span></div>';
+    return `<div class="regions-line"><span class="label">Map regions</span>${regs.map(n => `<span class="chip ${regionDone(n) ? 'chip-ok' : 'chip-bad'}">${esc(n)} ${regionDone(n) ? '✓' : '· not downloaded'}</span>`).join('')}</div>`;
+  }
+
+  function gpxFor(r, opts = {}) {
+    const x = (v) => String(v).replace(/[<>&"']/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c]));
+    const pts = r.points;
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Rally Book" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>${x(r.name)}</name></metadata>
+${pts.map((p, j) => `  <wpt lat="${p.lat}" lon="${p.lon}"><name>${opts.plain ? '' : letter(j) + ' '}${x(p.label)}</name></wpt>`).join('\n')}
+${(opts.extra || []).map(p => `  <wpt lat="${p.lat}" lon="${p.lon}"><name>#${p.num} ${x(p.label)}</name></wpt>`).join('\n')}
+${opts.plain ? '' : `  <rte><name>${x(r.name)}</name>
+${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)} ${x(p.label)}</name></rtept>`).join('\n')}
+  </rte>`}
+</gpx>
+`;
+  }
+  function copySheet(text, label, all) {
+    ask({ title: 'Copy coordinates', ok: 'Copy', html: `
+      <p>Copying ${esc(label)}:</p>
+      <div class="copy-box">${esc(text)}</div>
+      <div class="warn-loud">
+        <strong class="big">Turn on Incognito first</strong>
+        <span>Before you paste into Google Maps, tap your profile picture there and turn on Incognito mode. Otherwise Google saves it to your account.</span>
+      </div>
+      ${all ? '<p class="small">Google Maps takes one point at a time. Paste a single line into its search box.</p>' : '<p class="small">Paste it into the Google Maps search box to see the spot, traffic and directions.</p>'}
+      <p class="small muted">Only useful when you have service. With no service, use Organic Maps.</p>` },
+      () => {
+        const done = () => toast('Copied. Open Google Maps in Incognito and paste.');
+        try { navigator.clipboard.writeText(text).then(done, () => toast("Couldn't copy here. Press and hold the coordinates to copy them.")); }
+        catch { toast("Couldn't copy here. Press and hold the coordinates to copy them."); }
+      });
+  }
+  async function keepView(fn) {
+    const open = [...document.querySelectorAll('details.card')].map(d => d.open), y = window.scrollY;
+    await fn();
+    document.querySelectorAll('details.card').forEach((d, i) => { d.open = !!open[i]; });
+    window.scrollTo(0, y);
+  }
+  function isPhone() {
+    const ua = navigator.userAgent || '';
+    return /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  }
+  function canShareGpx() {
+    if (!isPhone()) return false;
+    try { return !!(navigator.canShare && navigator.canShare({ files: [new File(['x'], 't.gpx', { type: 'application/gpx+xml' })] })); } catch { return false; }
+  }
+  function shareGpx(r, opts = {}) {
+    const name = (r.name.replace(/[^A-Za-z0-9 _-]+/g, '').trim().replace(/\s+/g, '-') || 'route') + '.gpx';
+    const text = gpxFor(r, opts);
+    let file = null;
+    try { file = new File([text], name, { type: 'application/gpx+xml' }); } catch {}
+    if (isPhone()) {
+      // On a phone, never fall back to a download: Safari saves downloads to iCloud Drive by default.
+      if (file && canShareGpx()) {
+        navigator.share({ files: [file], title: r.name }).catch(err => { if (err && err.name !== 'AbortError') toast("This phone couldn't send the route to another app. Use Copy coordinates instead."); });
+      } else {
+        toast("This phone can't send route files from here. Use Copy coordinates instead.");
+      }
+      return;
+    }
+    let embedded = false;
+    try { embedded = window.top !== window.self; } catch { embedded = true; }
+    if (embedded) { toast("This viewer can't create files. Open the offline Rally Book file in Safari or Chrome."); return; }
+    try {
+      const url = URL.createObjectURL(new Blob([text], { type: 'application/gpx+xml' }));
+      const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      toast('Route file saved to your Downloads folder.');
+    } catch { toast("This viewer can't create files. Open Rally Book in Safari or Chrome."); }
+  }
+
+  // ---------- Points of interest ----------
+  let poiFilter = null;    // Set of hidden types (view only, not saved)
+  let openSetup = false;   // keep the compact setup bar open across re-renders
+  function allPois() {
+    const out = [];
+    st.roster.filter(m => m.status === 'active').forEach(m => (m.pois || []).forEach((p, idx) => out.push({ ...p, owner: m, idx })));
+    return out.map((p, i) => ({ ...p, num: i + 1 }));
+  }
+  // Group points into areas: anything within ~75 miles of another point in the group.
+  // Fixed areas, west to east. Same scale except West Texas, which is zoomed out. Points outside them go to "Other areas".
+  const AREAS = [
+    { name: 'Phoenix area', lat: 33.3, lon: -111.8, span: 4.0 },
+    { name: 'Las Cruces & El Paso', lat: 32.0, lon: -106.6, span: 4.0 },
+    { name: 'West Texas', lat: 30.9, lon: -102.4, span: 5.6 },   // zoomed out to reach Big Bend and Del Rio
+    { name: 'North & East Texas', lat: 32.2, lon: -96.9, span: 4.0 },
+  ];
+  const AREA_SPAN_LAT = 4.0, MAP_W = 320, MAP_H = 220;
+  function areaView(a) {
+    const span = a.span || AREA_SPAN_LAT;
+    const kx = Math.cos(a.lat * Math.PI / 180), sc = MAP_H / span;
+    return { proj: (lat, lon) => [MAP_W / 2 + (lon - a.lon) * kx * sc, MAP_H / 2 - (lat - a.lat) * sc], sc, W: MAP_W, H: MAP_H, spanLatShown: span };
+  }
+  function inArea(a, p) {
+    const span = a.span || AREA_SPAN_LAT;
+    const halfLon = (span * MAP_W / MAP_H) / 2 / Math.cos(a.lat * Math.PI / 180);
+    return Math.abs(p.lat - a.lat) <= span / 2 && Math.abs(p.lon - a.lon) <= halfLon;
+  }
+  function poiAreas(list) {
+    const out = AREAS.map(a => ({ name: a.name, area: a, points: [] }));
+    const other = [];
+    list.forEach(p => {
+      const fits = out.filter(o => inArea(o.area, p));
+      if (!fits.length) { other.push(p); return; }
+      fits.sort((x, y) => miles(p, x.area) - miles(p, y.area))[0].points.push(p);
+    });
+    if (other.length) out.push({ name: 'Other areas', area: null, points: other });
+    out.forEach(o => o.points.sort((a, b) => a.num - b.num));
+    return out;
+  }
+  function poiMap(list, label, area, emptyMsg = 'No points here yet') {
+    const v = area ? areaView(area) : makeView(list, AREA_SPAN_LAT, MAP_W, MAP_H, 30);
+    const xy = spreadOverlaps(list.map(p => v.proj(p.lat, p.lon)), 18);
+    const inner = list.map((p, i) => `<g class="poi-dot" data-act="poiPop" data-arg="${p.owner.id}|${p.idx}|${p.num}" data-x="${xy[i][0].toFixed(1)}" data-y="${xy[i][1].toFixed(1)}" role="button" aria-label="Point ${p.num}: ${esc(p.label)}">
+        <circle cx="${xy[i][0].toFixed(1)}" cy="${xy[i][1].toFixed(1)}" r="17" fill="transparent"/>
+        <circle cx="${xy[i][0].toFixed(1)}" cy="${xy[i][1].toFixed(1)}" r="10" fill="${poiColor(p.type)}" stroke="var(--surface)" stroke-width="2"/>
+        <text x="${xy[i][0].toFixed(1)}" y="${(xy[i][1] + 4).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="600" font-family="var(--font-mono)" fill="#fff">${p.num}</text></g>`).join('')
+      + (list.length ? '' : `<rect x="${MAP_W / 2 - 78}" y="${MAP_H / 2 - 13}" width="156" height="26" rx="6" fill="var(--surface)" opacity="0.92"/><text x="${MAP_W / 2}" y="${MAP_H / 2 + 4}" text-anchor="middle" font-size="11.5" fill="var(--muted)" font-family="var(--font-body)">${emptyMsg}</text>`);
+    return mapFrame(v, inner, `Map of ${label}, ${list.length} points of interest, with approximate state lines, highways and cities. North is up.`, xy);
+  }
+  let carIdx = 0;
+  const omPointLink = (p) => `om://map?v=1&ll=${p.lat},${p.lon}&n=${encodeURIComponent('Point')}`;
+  function poiItem(p) {
+    const ti = typeInfo(p.type);
+    return `
+          <li><details class="poi-card" data-poi="${p.owner.id}|${p.idx}">
+            <summary>
+              <span class="poi-num" style="background:${ti.color}" aria-hidden="true">${p.num}</span>
+              <span class="poi-name">${esc(p.label)}</span>
+              <span class="rcaret" aria-hidden="true">▶</span>
+              <span class="poi-type"><span class="dot" style="background:${ti.color}"></span>${esc(ti.label)} · ${esc(p.owner.name)}</span>
+            </summary>
+            <div class="poi-detail">
+              ${p.note ? `<span class="small">${esc(p.note)}</span>` : ''}
+              <span class="leg mono">${fmtLL(p)}</span>
+              <div class="row">
+                <a class="btn btn-small btn-primary" href="${omPointLink(p)}">Open in Organic Maps</a>
+                <button class="btn btn-small" type="button" data-act="copyPoi" data-arg="${p.owner.id}|${p.idx}|${p.num}">Copy</button>
+              </div>
+            </div>
+          </details></li>`;
+  }
+  function poiSection() {
+    const all = allPois();
+    const hidden = poiFilter || new Set();
+    const shown = all.filter(p => !hidden.has(typeInfo(p.type).id));
+    const seenT = new Map();
+    all.forEach(p => { const ti = typeInfo(p.type); if (!seenT.has(ti.id)) seenT.set(ti.id, ti); });
+    const order = POI_TYPES.map(([t]) => t);
+    const typesPresent = [...seenT.values()].sort((a, b) => (order.indexOf(a.id) < 0 ? 99 : order.indexOf(a.id)) - (order.indexOf(b.id) < 0 ? 99 : order.indexOf(b.id))).map(ti => [ti.id, ti.label]);
+    return `
+      <div class="panel">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <h3 class="section-title">Points of interest</h3>
+          <button class="fb-mini" type="button" data-act="feedback" data-arg="suggestion|Points of interest" aria-label="Send feedback about points of interest"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+          <span class="chip">${shown.length === all.length ? `${all.length} ${all.length === 1 ? 'point' : 'points'}` : `${shown.length} of ${all.length} shown`}</span>
+        </div>
+        ${st.removedSelf ? '' : '<button class="btn btn-small btn-primary" type="button" data-act="poiAddFromPlans">Add a point of interest</button>'}
+        ${!all.length ? '<p class="small muted">No points yet. Add storage spots, friends\' houses, businesses, landmarks or campgrounds under My plan.</p>' : `
+        <div class="poi-filters" role="group" aria-label="Show or hide types">
+          ${typesPresent.map(([t, label]) => `<button class="poi-filter" type="button" data-act="poiFilter" data-arg="${t}" aria-pressed="${!hidden.has(t)}"><span class="dot" style="background:${poiColor(t)}"></span>${esc(label)}</button>`).join('')}
+        </div>
+        ${(() => {
+          const allHidden = !shown.length;
+          const areas = poiAreas(shown);
+          if (carIdx >= areas.length) carIdx = 0;
+          return `
+          <div class="carousel">
+            <div class="car-head">
+              <button class="car-btn" type="button" data-act="carMove" data-arg="-1" aria-label="Previous area" ${areas.length < 2 ? 'disabled' : ''}>‹</button>
+              <div class="car-label" id="carLabel" aria-live="polite">${esc(areas[carIdx].name)}<small>${carIdx + 1} of ${areas.length} · ${areas[carIdx].points.length} ${areas[carIdx].points.length === 1 ? 'point' : 'points'}</small></div>
+              <button class="car-btn" type="button" data-act="carMove" data-arg="1" aria-label="Next area" ${areas.length < 2 ? 'disabled' : ''}>›</button>
+            </div>
+            <div class="car-track" id="carTrack" data-areas="${esc(JSON.stringify(areas.map(a => [a.name, a.points.length])))}">
+              ${areas.map(a => `<div class="car-slide map-wrap">${poiMap(a.points, a.name, a.area, allHidden ? 'All types hidden' : 'No points here yet')}</div>`).join('')}
+            </div>
+          </div>
+          ${allHidden ? '<p class="small muted">All types are hidden. Tap a type above to show it again.</p>' : ''}
+          ${areas.filter(a => a.points.length).map(a => `<h4 class="area-head">${esc(a.name)}</h4><ol class="poi-list">${a.points.map(p => poiItem(p)).join('')}</ol>`).join('')}`;
+        })()}
+        ${shown.length > 1 ? `<button class="btn btn-small" type="button" data-act="poiAllAsk">Open all ${shown.length} shown in Organic Maps</button>` : ''}
+        <p class="small muted">Tap a point to see notes and buttons. "Open in Organic Maps" shows just the spot and the roads around it. It doesn't save anything there, and the details stay in Rally Book.</p>`}
+      </div>`;
+  }
+
+  let openRoutes = new Set();
+  let openEditRoutes = null;   // which routes are expanded in the My plan editor
+  function routeView(m, r, i) {
+    const pts = r.points || [];
+    const total = pts.length > 1 ? routeTotal(pts) : 0;
+    const key = `${m.id}|${i}`;
+    const regs = r.regions || [];
+    const needs = !regs.length || regs.some(g => !regionDone(g));
+    return `
+      <details class="route" data-route="${esc(key)}" ${openRoutes.has(key) ? 'open' : ''}>
+        <summary>
+          <strong>${esc(r.name)}</strong><span class="rcaret" aria-hidden="true">▶</span>
+          <span class="rmeta"><span class="chip">${pts.length} ${pts.length === 1 ? 'point' : 'points'}${total ? ' · ' + mi(total) + ' straight-line' : ''}</span>${needs ? '<span class="chip chip-bad">Maps needed</span>' : ''}</span>
+        </summary>
+        <div class="route-body">
+          ${r.note ? `<p class="small">${esc(r.note)}</p>` : ''}
+          ${regionsLine(r)}
+          ${(() => {
+            if (!pts.length) return '';
+            const near = nearbyPois(pts);
+            const hidden = routePoiHidden.get(key) || new Set();
+            const showOnMap = routePoiOn.has(key) ? near.filter(p => !hidden.has(typeInfo(p.type).id)) : [];
+            return `<div class="map-wrap">${sketch(pts, showOnMap)}</div>${routePoiBlock(key, pts, near)}`;
+          })()}
+          ${pts.length ? `<ol class="wps">${pts.map((p, j) => `
+            <li><span class="wp-letter" aria-hidden="true">${letter(j)}</span>
+              <span class="wp-text"><strong>${esc(p.label)}</strong><span class="mono">${fmtLL(p)}</span>
+              ${j > 0 ? `<span class="leg">${mi(miles(pts[j - 1], p))} ${compass(pts[j - 1], p)} from ${letter(j - 1)}</span>` : ''}</span>
+              <button class="wp-copy" type="button" data-act="copyAsk" data-arg="${m.id}|${i}|${j}" aria-label="Copy coordinates for ${letter(j)} ${esc(p.label)}">Copy</button></li>`).join('')}
+            </ol>
+            <div class="row">
+              <button class="btn btn-small btn-primary" type="button" data-act="omAsk" data-arg="${m.id}|${i}">Open in Organic Maps</button>
+              <button class="btn btn-small" type="button" data-act="copyAsk" data-arg="${m.id}|${i}|all">Copy all coordinates</button>
+            </div>` : '<p class="small muted">No waypoints yet.</p>'}
+        </div>
+      </details>`;
+  }
+
+  // What an incoming plan update actually changes on THIS phone (may differ from the sender's list if updates were missed).
+  function planChanges(m, p) {
+    if (!p.full) return p.changes;
+    const out = FIELDS.map(([k]) => k).filter(k => (p.fields[k] || '') !== (m.fields[k] || ''));
+    if (JSON.stringify(p.routes || []) !== JSON.stringify(m.routes || [])) out.push('routes');
+    if (JSON.stringify(p.pois || []) !== JSON.stringify(m.pois || [])) out.push('pois');
+    return out;
+  }
+  const poiSummary = (ps) => (ps && ps.length) ? ps.map(p => `${p.label} (${typeInfo(p.type).label})`).join(', ') : '(none)';
+  const routeSummary = (rs) => (rs && rs.length) ? rs.map(r => `${r.name}: ${(r.points || []).map(p => p.label).join(' → ') || 'no waypoints'}`).join(' · ') : '(none)';
+
+  function makeDraft() {
+    const m = me();
+    return {
+      fields: Object.fromEntries(FIELDS.map(([k]) => [k, m.fields[k] || ''])),
+      newTypes: [],
+      pois: (m.pois || []).map(p => ({ type: p.type, label: p.label, note: p.note || '', coords: fmtLL(p) })),
+      routes: (m.routes || []).map(r => ({ name: r.name, note: r.note || '', regions: [...(r.regions || [])], points: (r.points || []).map(p => ({ label: p.label, coords: fmtLL(p) })) })),
+    };
+  }
+
+  // ---------------- Appearance (per device) ----------------
+  const THEME_KEY = 'rallybook.theme';
+  const THEME_ORDER = ['auto', 'light', 'dark'];
+  const SVGI = (inner) => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+  const THEME_ICON = {
+    auto: SVGI('<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/>'),
+    light: SVGI('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+    dark: SVGI('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),
+  };
+  const THEME_NAME = { auto: 'Auto (matches your phone)', light: 'Light', dark: 'Dark' };
+  let theme = 'auto';
+  try { theme = localStorage.getItem(THEME_KEY) || 'auto'; } catch {}
+  if (!THEME_ORDER.includes(theme)) theme = 'auto';
+  function applyTheme() {
+    if (theme === 'auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('[data-act="theme"]').forEach(b => {
+      if (b.id === 'themeBtn') b.innerHTML = THEME_ICON[theme];
+      else b.textContent = `Appearance: ${THEME_NAME[theme]}`;
+      b.setAttribute('aria-label', `Appearance: ${THEME_NAME[theme]}. Tap to change.`);
+    });
+  }
+  applyTheme();
+
+  // ---------------- Map pop-up ----------------
+  function closePop() { document.querySelectorAll('.poi-pop').forEach(el => el.remove()); }
+  function openPop(g) {
+    closePop();
+    const [mid, idx, num] = g.dataset.arg.split('|');
+    const p = (person(mid)?.pois || [])[+idx];
+    if (!p) return;
+    const ti = typeInfo(p.type);
+    const slide = g.closest('.map-wrap'), svg = g.closest('svg');
+    const sr = slide.getBoundingClientRect(), vr = svg.getBoundingClientRect();
+    const x = vr.left - sr.left + (+g.dataset.x / MAP_W) * vr.width;
+    const y = vr.top - sr.top + (+g.dataset.y / MAP_H) * vr.height;
+    const pop = document.createElement('div');
+    pop.className = 'poi-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', `Point ${num}: ${p.label}`);
+    pop.innerHTML = `
+      <div class="poi-pop-head"><span class="poi-num" style="background:${ti.color}">${num}</span><span>${esc(p.label)}</span></div>
+      <span class="small muted"><span class="dot" style="background:${ti.color}"></span> ${esc(ti.label)} · added by ${esc(person(mid).name)}</span>
+      <div class="row"><button class="btn btn-small btn-primary" type="button" data-act="poiPopDetails" data-arg="${mid}|${idx}">View details</button><button class="btn btn-small" type="button" data-act="poiPopClose">Close</button></div>`;
+    slide.appendChild(pop);
+    const w = pop.offsetWidth, h = pop.offsetHeight;
+    const left = Math.max(4, Math.min(sr.width - w - 4, x - w / 2));
+    const room = vr.height + (vr.top - sr.top);
+    let top = y > room / 2 ? y - h - 14 : y + 14;
+    top = Math.max(4, Math.min(room - h - 4, top));
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+    pop.querySelector('button')?.focus({ preventScroll: true });
+  }
+
+  // ---------------- Feedback ----------------
+  const FB_TYPES = [['bug', 'Something is broken'], ['suggestion', 'Suggestion'], ['region', 'Add a map region'], ['other', 'Other']];
+  const FB_SECTIONS = ['Plans', 'Points of interest', 'Routes', 'Offline maps', 'My plan', 'Import', 'Group', 'Intent', 'Guide', 'Other'];
+  function feedbackSheet(defType, defSection) {
+    ask({ title: 'Send feedback', ok: 'Create message', html: `
+      <p class="small">This makes an encrypted message for Signal. Send it to whoever maintains Rally Book, or to the group.</p>
+      <div class="field"><label class="label" for="fbType">Type</label>
+        <select class="select" id="fbType">${FB_TYPES.map(([v, l]) => `<option value="${v}" ${v === defType ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+      <div class="field"><label class="label" for="fbSection">Part of the app</label>
+        <select class="select" id="fbSection">${FB_SECTIONS.map(v => `<option ${v === defSection ? 'selected' : ''}>${esc(v)}</option>`).join('')}</select></div>
+      <div class="field"><label class="label" for="fbRegion">Region to add (for region requests)</label>
+        <input class="input" id="fbRegion" list="fbRegionNames" placeholder="e.g. Oklahoma" autocomplete="off">
+        <datalist id="fbRegionNames">${US_STATES.map(n => `<option value="${n}"></option>`).join('')}</datalist></div>
+      <div class="field"><label class="label" for="fbText">What happened, or what would help?</label>
+        <textarea class="area" id="fbText" rows="4" placeholder="For a bug: what you tapped and what you expected."></textarea></div>` },
+      (v = {}) => {
+        const ftype = v.fbType || 'other', section = v.fbSection || 'Other';
+        const text = (v.fbText || '').trim(), region = (v.fbRegion || '').trim();
+        if (!text && !(ftype === 'region' && region)) { toast('Add a short description first.'); setTimeout(() => feedbackSheet(ftype, section), 0); return; }
+        busy(null, async () => {
+          const item = { id: b64(rand(6)), from: st.member, ts: Date.now(), ftype, section, text, region, done: false };
+          const out = await sealPacket({ kind: 'feedback', ...item });
+          st.feedback = st.feedback || []; st.feedback.unshift({ ...item, sent: true });
+          await saveSt();
+          ask({ title: 'Feedback ready to send', ok: 'Copy', html: `
+            <ol class="steps" style="color:var(--ink)"><li>Tap Copy.</li><li>Paste it into Signal: to whoever maintains Rally Book, or the group.</li><li>They tap Import and save it to their Feedback inbox.</li></ol>
+            <div class="copy-box" style="max-height:8rem;overflow:auto">${esc(out)}</div>` },
+            () => { navigator.clipboard.writeText(out).then(() => toast('Copied. Paste it into Signal.'), () => toast("Couldn't copy here. Press and hold the text to copy it.")); });
+          outbox = { text: out, label: `${me().name}'s feedback` };
+          if (tab === 'group') render();
+        });
+      });
+  }
+
+  // ---------------- Confirmation sheet ----------------
+  let sheetRun = null;
+  function ask({ title, body = '', html = '', ok, danger = false, href = '', needs = '' }, run) {
+    sheetRun = run;
+    const el = $('#sheet');
+    el.innerHTML = `<div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="sheetTitle" aria-describedby="sheetBody">
+      <h3 id="sheetTitle">${esc(title)}</h3>
+      ${html ? `<div id="sheetBody" class="sheet-body">${html}</div>` : `<p id="sheetBody" class="small">${esc(body)}</p>`}
+      <div class="row">
+        ${run || href ? '<button class="btn" type="button" data-act="sheetNo">Cancel</button>' : ''}
+        ${href ? `<a class="btn btn-primary ${needs ? 'is-off' : ''}" href="${esc(href)}" target="_blank" rel="noopener noreferrer" data-act="sheetLink" ${needs ? `data-needs="${needs}" aria-disabled="true"` : ''}>${esc(ok)}</a>`
+          : `<button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" type="button" data-act="sheetYes">${esc(ok)}</button>`}
+      </div></div>`;
+    el.hidden = false;
+    (el.querySelector('[data-act="sheetNo"]') || el.querySelector('[data-act="sheetYes"]'))?.focus();
+  }
+  function closeSheet() { const el = $('#sheet'); el.hidden = true; el.innerHTML = ''; sheetRun = null; }
+
+  // ---------------- Demo group setup ----------------
+  async function setupDemo() {
+    const gk = rand(32);
+    const pairs = {};
+    for (const m of SEED) pairs[m.id] = { s: await genPair('sign'), d: await genPair('dh') };
+    const roster = SEED.map(m => ({
+      id: m.id, name: m.name, status: 'active', sign: pairs[m.id].s.pub, dh: pairs[m.id].d.pub,
+      rev: m.rev, updated: Date.now() - m.ago * 86400000, lastChanged: [], fields: { ...m.fields }, routes: structuredClone(m.routes || []), pois: structuredClone(m.pois || []),
+    }));
+    for (const m of SEED) {
+      const sSalt = rand(16);
+      const key = await pbkdf(m.id + '-pass', sSalt);
+      const state = { member: m.id, epoch: 1, keys: { 1: b64(gk) }, signPriv: pairs[m.id].s.priv, dhPriv: pairs[m.id].d.priv,
+        roster: structuredClone(roster), removedSelf: false, pendingIdentity: false,
+        intent: { rev: 1, text: INTENT_START, by: 'elias', ts: Date.now() - 86400000 * 7 } };
+      const box = await aesSeal(key, te.encode(JSON.stringify(state)));
+      slotWrite(m.slot, { v: 2, name: m.name, salt: b64(sSalt), box: b64(box) });
+    }
+    slotClear('p4');
+  }
+
+  // ---------------- Lock screen ----------------
+  function viewLock() {
+    const recs = Object.fromEntries(SLOTS.map(id => [id, slotRead(id)]));
+    const anyGroup = SLOTS.some(id => recs[id]);
+    const cur = recs[slot];
+    const seg = `
+      <div class="field">
+        <span class="label">Which phone is this? (demo only)</span>
+        <div class="seg">${SLOTS.map(id => `
+          <button type="button" data-act="slot" data-arg="${id}" aria-pressed="${id === slot}">
+            <strong>${esc(SLOT_LABEL[id])}${recs[id] ? ' · ' + esc(recs[id].name) : ''}</strong>
+            <small>${recs[id] ? 'Set up' : 'Empty'}</small>
+          </button>`).join('')}
+        </div>
+      </div>`;
+
+    if (lockMode === 'restore') {
+      return `
+        <div class="lock-inner">
+          <div class="brand">Rally <span>Book</span></div>
+          ${seg}
+          <form data-form="restore" class="panel" autocomplete="off">
+            <h3>Restore from a teammate</h3>
+            <p class="muted small">For a new phone or a forgotten password. A teammate creates a package for you under Group, then reads you the code in person or on a call. This replaces anything on ${esc(SLOT_LABEL[slot])}.</p>
+            <div class="field"><label class="label" for="rPkg">Package from Signal</label>
+              <textarea id="rPkg" class="area mono" rows="4" placeholder="RALLYR.…" required></textarea></div>
+            <div class="field"><label class="label" for="rCode">Code they read to you</label>
+              <input id="rCode" class="input mono" placeholder="XXX-XXX-XXX" required></div>
+            <div class="field"><label class="label" for="rPass1">Your new password</label>
+              <input id="rPass1" class="input" type="password" minlength="6" required></div>
+            <div class="field"><label class="label" for="rPass2">Type it again</label>
+              <input id="rPass2" class="input" type="password" minlength="6" required></div>
+            ${lockErr ? `<p class="err">${esc(lockErr)}</p>` : ''}
+            ${outboxRestore ? `<button class="linkbtn small" type="button" data-act="fillRestore">Demo: fill in the last package and code (${esc(outboxRestore.label)})</button>` : ''}
+            <div class="row">
+              <button class="btn" type="button" data-act="lockMode" data-arg="unlock">Back</button>
+              <button class="btn btn-primary" type="button" data-act="submitForm">Restore this phone</button>
+            </div>
+          </form>
+        </div>`;
+    }
+
+    return `
+      <div class="lock-inner">
+        <div class="brand">Rally <span>Book</span></div>
+        <p class="muted">Each household's plan for when we can't reach each other. Encrypted on this phone, unlocked by your own password.</p>
+        ${anyGroup ? seg : ''}
+        ${!anyGroup ? `
+          <div class="panel">
+            <h3>No demo group yet</h3>
+            <p class="muted small">Creates three phones (Elias, Marcus, Dana). Each has its own password, and all share one group key. All names, places and routes are made up.</p>
+            <button class="btn btn-primary" type="button" data-act="setup">Create demo group</button>
+          </div>` : cur ? `
+          <form data-form="unlock" class="lock-inner" style="gap:12px" autocomplete="off">
+            <div class="field"><label class="label" for="pass">${esc(cur.name)}'s password</label>
+              <input id="pass" class="input" type="password" autocomplete="off" required></div>
+            ${cur.fails ? `<p class="notice notice-bad">${cur.fails} wrong ${cur.fails === 1 ? 'password' : 'passwords'} in a row. This phone erases its Rally Book data after ${MAX_FAILS} (${MAX_FAILS - cur.fails} left).</p>` : ''}
+            ${lockErr ? `<p class="err">${esc(lockErr)}</p>` : ''}
+            <button class="btn btn-primary btn-block" type="button" data-act="submitForm">Unlock</button>
+            <button class="linkbtn small" type="button" data-act="lockMode" data-arg="restore">Forgot your password? Restore from a teammate</button>
+          </form>` : `
+          <div class="panel">
+            <h3>${esc(SLOT_LABEL[slot])} is empty</h3>
+            ${lockErr ? `<p class="notice notice-bad">${esc(lockErr)}</p>` : ''}
+            <p class="muted small">Set it up as a new or replacement phone using a package from a teammate.</p>
+            <button class="btn btn-primary" type="button" data-act="lockMode" data-arg="restore">Restore from a teammate</button>
+          </div>`}
+        ${anyGroup ? `<div class="hint">Demo passwords: <code>elias-pass</code> · <code>marcus-pass</code> · <code>dana-pass</code>. A restored phone uses the password you set. 10 wrong passwords in a row erases that phone.</div>` : ''}
+        ${anyGroup ? `<button class="linkbtn small" type="button" data-act="eraseAll" style="color:var(--muted)">Erase all demo phones</button>` : ''}
+        <div class="theme-lock"><button class="linkbtn small" type="button" data-act="theme" style="color:var(--muted)">Appearance: ${THEME_NAME[theme]}</button></div>
+      </div>`;
+  }
+
+  function showLock() {
+    $('#appView').hidden = true; $('#lockView').hidden = false;
+    $('#lockView').innerHTML = viewLock();
+    applyTheme();
+    const p = $('#pass'); if (p) p.focus({ preventScroll: true });
+  }
+
+  function lock() {
+    pwKey = null; salt = null; st = null; draft = null;
+    pending = null; importMsg = null; groupMsg = null; lastOutput = null; confirmRemove = null;
+    lockMode = 'unlock'; lockErr = ''; confirmErase = false;
+    $('#main').innerHTML = '';
+    showLock();
+  }
+
+  async function unlock(pass) {
+    const rec = slotRead(slot);
+    if (!rec) throw new Error('This phone has no Rally Book data.');
+    salt = unb64(rec.salt);
+    pwKey = await pbkdf(pass, salt);
+    try { st = JSON.parse(td.decode(await aesOpen(pwKey, unb64(rec.box)))); }
+    catch {
+      pwKey = null; salt = null;
+      const fails = (rec.fails || 0) + 1;
+      if (fails >= MAX_FAILS) {
+        slotClear(slot);
+        throw new Error(`${MAX_FAILS} wrong passwords in a row, so Rally Book erased its data on this phone. Ask a teammate to restore you.`);
+      }
+      slotWrite(slot, { ...rec, fails });
+      throw new Error("That password didn't unlock this phone.");
+    }
+    if (rec.fails) slotWrite(slot, { ...rec, fails: 0 });
+    enterApp();
+  }
+
+  function enterApp() {
+    lastActivity = Date.now();
+    lockErr = ''; tab = st.pendingIdentity ? 'group' : 'plans';
+    $('#lockView').hidden = true; $('#appView').hidden = false;
+    render();
+    if (!storageOk) toast('Storage is blocked here. Changes last until you close this page.');
+  }
+
+  async function restore(form) {
+    const raw = form.rPkg.value.replace(/\s+/g, '');
+    if (form.rPass1.value !== form.rPass2.value) throw new Error("The two passwords don't match.");
+    if (!raw.startsWith('RALLYR.')) throw new Error("That isn't a restore package. It should start with RALLYR.");
+    let data;
+    try {
+      const u = unb64(raw.slice(7));
+      const k = await pbkdf(normCode(form.rCode.value), u.slice(0, 16));
+      data = JSON.parse(td.decode(await aesOpen(k, u.slice(16))));
+    } catch { throw new Error("That code doesn't open this package. Check the code and that the whole package was copied."); }
+    const age = Date.now() - (data.ts || 0);
+    if (age > PKG_TTL) { const h = Math.max(1, Math.floor((age - PKG_TTL) / 3600000)); throw new Error(`This package expired ${h === 1 ? 'about an hour' : h + ' hours'} ago. Packages only work for 48 hours. Ask a teammate to make a new one.`); }
+    if (age < -10 * 60000) throw new Error("This package's date is in the future. Check the date and time on both phones, then try again.");
+    const s = await genPair('sign'), d = await genPair('dh');
+    const mine = data.roster.find(r => r.id === data.member);
+    mine.sign = s.pub; mine.dh = d.pub;
+    st = { member: data.member, epoch: data.epoch, keys: { [data.epoch]: data.key }, signPriv: s.priv, dhPriv: d.priv,
+      roster: data.roster, removedSelf: false, pendingIdentity: true };
+    salt = rand(16); pwKey = await pbkdf(form.rPass1.value, salt);
+    await saveSt();
+    groupMsg = { ok: true, text: `This phone is set up for ${mine.name}. Send your new identity to the group so they accept your updates.` };
+    enterApp();
+  }
+
+  // ---------------- App views ----------------
+  async function render() {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.arg === tab)));
+    $('#phoneChip').textContent = `${me().name}'s phone`;
+    const main = $('#main');
+    if (tab === 'plans') { main.innerHTML = viewPlans(); const t = $('#carTrack'); if (t) t.scrollLeft = carIdx * t.clientWidth; }
+    if (tab === 'mine') main.innerHTML = viewMine();
+    if (tab === 'import') main.innerHTML = await viewImport();
+    if (tab === 'group') main.innerHTML = await viewGroup();
+    if (tab === 'intent') main.innerHTML = viewIntent();
+  }
+
+  function removedBanner() {
+    return st.removedSelf ? `<p class="notice notice-bad">This phone was removed from the group. It keeps what it already had but can't open new updates.</p>` : '';
+  }
+
+  function viewPlans() {
+    const cards = st.roster.map(m => `
+      <details class="card ${m.status === 'removed' ? 'removed' : ''}">
+        <summary>
+          <span class="who">${esc(m.name)}
+            ${m.id === st.member ? '<span class="chip chip-accent">You</span>' : ''}
+            ${m.status === 'removed' ? '<span class="chip chip-bad">Removed</span>' : ''}</span>
+          <span class="caret" aria-hidden="true">▶</span>
+          <span class="meta">rev ${m.rev} · updated ${esc(fmt(m.updated))}${(() => { const n = (m.routes || []).filter(r => !(r.regions || []).length || (r.regions || []).some(g => !regionDone(g))).length; return n ? ` · ${n} ${n === 1 ? 'route needs' : 'routes need'} maps` : ''; })()}</span>
+        </summary>
+        <dl class="plan">
+          ${FIELDS.map(([k, label]) => `
+            <div class="plan-item">
+              <dt><span class="label">${esc(label)}</span>${(m.lastChanged || []).includes(k) ? '<span class="chip chip-ok">Updated</span>' : ''}</dt>
+              <dd>${m.fields[k] ? esc(m.fields[k]) : '<span class="muted">Not filled in yet</span>'}</dd>
+            </div>${k === 'trigger' ? `
+            <div class="plan-item">
+              <dt><span class="label">Routes</span>${(m.lastChanged || []).includes('routes') ? '<span class="chip chip-ok">Updated</span>' : ''}</dt>
+              <dd>${(m.routes || []).length ? m.routes.map((r, i) => routeView(m, r, i)).join('') : '<span class="muted">No routes yet</span>'}</dd>
+            </div>` : ''}`).join('')}
+        </dl>
+      </details>`).join('');
+    return `
+      <h2>Household plans</h2>
+      <p class="lede">What each of us will do if we can't reach each other.</p>
+      ${removedBanner()}
+      <div class="banner">Sample data. Names, places and routes are made up.</div>
+      ${setupComplete() ? '' : readinessPanel(false)}
+      ${cards}
+      ${poiSection()}
+      ${setupComplete() ? readinessPanel(true) : ''}`;
+  }
+
+  function setupInfo() {
+    const list = [...BASE_REGIONS], untagged = [], outside = new Map();
+    st.roster.filter(m => m.status === 'active').forEach(m => (m.routes || []).forEach(r => {
+      if (!(r.points || []).length) return;
+      if (!(r.regions || []).length) untagged.push(`${m.name} · ${r.name}`);
+      (r.regions || []).forEach(n => {
+        if (list.some(x => rkey(x) === rkey(n))) return;
+        const k = rkey(n); if (!outside.has(k)) outside.set(k, { name: n, routes: [] });
+        outside.get(k).routes.push(`${m.name} · ${r.name}`);
+      });
+    }));
+    const done = list.filter(regionDone).length;
+    const su = st.omSetup || {};
+    return { list, done, su, untagged, outside: [...outside.values()], complete: !!(su.installed && su.icloudOff && done === list.length) };
+  }
+  const setupComplete = () => setupInfo().complete;
+  function readinessPanel(compact) {
+    const { list, done, su, untagged, outside, complete } = setupInfo();
+    const body = `
+        ${complete ? '' : `<p class="notice notice-bad"><strong>Download your maps now, before you need them.</strong> Until a region is downloaded, Organic Maps only has a basic map of the whole country. You can't zoom in to street level or get directions there without service.</p>`}
+        <div class="setup-steps">
+          <span class="label">One-time setup on this phone</span>
+          <label class="check"><input type="checkbox" data-act="setupMark" data-arg="installed" ${su.installed ? 'checked' : ''}> Organic Maps is installed (free in the App Store)</label>
+          <label class="check"><input type="checkbox" data-act="setupMark" data-arg="icloudOff" ${su.icloudOff ? 'checked' : ''}> iCloud sync is turned off in Organic Maps' settings</label>
+        </div>
+        <div>
+          <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span class="label">Regions to download</span>
+            <span class="chip ${done === list.length ? 'chip-ok' : 'chip-bad'}">${done} of ${list.length} downloaded</span>
+          </div>
+          ${list.map(n => `
+          <div class="region-row">
+            <strong>${esc(n)}</strong>
+            <label class="check"><input type="checkbox" data-act="regionMark" data-arg="${esc(n)}" ${regionDone(n) ? 'checked' : ''}> Downloaded</label>
+            ${REGION_NOTES[rkey(n)] ? `<span class="leg">${esc(REGION_NOTES[rkey(n)])}</span>` : ''}
+          </div>`).join('')}
+        </div>
+        ${untagged.length ? `<p class="notice notice-bad">No map region set for: ${esc(untagged.join(', '))}. Ask the owner to tag it.</p>` : ''}
+        ${outside.length ? `<p class="notice notice-bad">Some routes use regions that aren't on the group's map list yet: ${outside.map(o => `<strong>${esc(o.name)}</strong> (${esc(o.routes.join(', '))})`).join('; ')}. Ask whoever maintains Rally Book to add them in an app update. Until then, download them yourself if you'll use those routes.</p>` : ''}
+        <button class="btn btn-small" type="button" data-act="regionHelp">How to download in Organic Maps</button>
+        <p class="small muted">Rally Book can't see inside Organic Maps, so this is based on what you've checked. The list itself is set by the app and changes with app updates.</p>`;
+    if (compact) {
+      return `
+      <details class="panel setup-done" ${openSetup ? 'open' : ''}>
+        <summary><span>Offline maps · ${list.length} ${list.length === 1 ? 'region' : 'regions'} downloaded</span><span class="chip chip-ok">Ready</span></summary>
+        <div class="setup-body">${body}</div>
+      </details>`;
+    }
+    return `
+      <div class="panel">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <h3>Offline maps setup</h3>
+          <button class="fb-mini" type="button" data-act="feedback" data-arg="region|Offline maps" aria-label="Request a map region or send feedback"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+          <span class="chip chip-bad">Not ready</span>
+        </div>
+        ${body}
+      </div>`;
+  }
+
+
+
+
+  function viewMine() {
+    if (st.removedSelf) return `<h2>My plan</h2>${removedBanner()}`;
+    if (!draft) draft = makeDraft();
+    if (!openEditRoutes) openEditRoutes = new Set();
+    const routesEditor = `
+      <div class="field">
+        <span class="label">Routes</span>
+        ${draft.routes.map((r, ri) => `
+          <details class="route-edit" data-edit-route="${ri}" ${openEditRoutes.has(ri) ? 'open' : ''}>
+            <summary>
+              <strong>${esc(r.name || 'Untitled route')}</strong><span class="rcaret" aria-hidden="true">▶</span>
+              ${r.note ? `<span class="rnote">${esc(r.note)}</span>` : ''}
+              <span class="rmeta" style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px"><span class="chip">${r.points.filter(w => (w.coords || '').trim()).length} waypoints</span>${(r.regions || []).length ? `<span class="chip">${esc((r.regions || []).join(', '))}</span>` : '<span class="chip chip-bad">No map region</span>'}</span>
+            </summary>
+            <div class="route-edit-body">
+            <div class="field"><label class="label" for="rn-${ri}">Route name</label>
+              <input class="input" id="rn-${ri}" data-r="${ri}" data-k="name" value="${esc(r.name)}" maxlength="60"></div>
+            <div class="field"><label class="label" for="ro-${ri}">Notes</label>
+              <textarea class="area" id="ro-${ri}" data-r="${ri}" data-k="note" rows="2">${esc(r.note)}</textarea></div>
+            <div class="field"><span class="label">Map regions this route crosses</span>
+              <div class="region-checks">${knownRegions().map(n => `
+                <label class="check"><input type="checkbox" data-r="${ri}" data-region="${esc(n)}" ${(r.regions || []).some(g => rkey(g) === rkey(n)) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}
+              </div>
+              <div class="region-add">
+                <input class="input" id="ra-${ri}" list="regionNames" placeholder="Add a region, e.g. Oklahoma" aria-label="Add a map region">
+                <button class="btn btn-small" type="button" data-act="regionAdd" data-arg="${ri}">Add</button>
+              </div></div>
+            <span class="label">Waypoints</span>
+            ${r.points.map((w, wi) => `
+              <div class="wp-edit">
+                <span class="wp-letter" aria-hidden="true">${letter(wi)}</span>
+                <input class="input" id="wl-${ri}-${wi}" data-r="${ri}" data-w="${wi}" data-k="label" value="${esc(w.label)}" placeholder="Label, e.g. Fuel stop" aria-label="Waypoint ${letter(wi)} label">
+                <input class="input mono wp-coords" id="wc-${ri}-${wi}" data-r="${ri}" data-w="${wi}" data-k="coords" value="${esc(w.coords)}" placeholder="32.5632, -97.1417" inputmode="text" autocomplete="off" aria-label="Waypoint ${letter(wi)} coordinates">
+                <button class="wp-del" type="button" data-act="wpDel" data-arg="${ri}:${wi}" aria-label="Remove waypoint ${letter(wi)}">×</button>
+              </div>`).join('')}
+            <div class="row">
+              <button class="btn btn-small" type="button" data-act="wpAdd" data-arg="${ri}">Add waypoint</button>
+              <button class="btn btn-small btn-quiet" type="button" data-act="routeDel" data-arg="${ri}">Delete route</button>
+            </div>
+            </div>
+          </details>`).join('')}
+        <button class="btn btn-small" type="button" data-act="routeAdd">Add route</button>
+        <datalist id="regionNames">${US_STATES.map(n => `<option value="${n}"></option>`).join('')}</datalist>
+        <p class="hint">To get coordinates in Apple Maps, press and hold to drop a pin, swipe up, and copy the coordinates. In Google Maps, press and hold a spot, then tap the coordinates at the top to copy them.</p>
+      </div>`;
+    return `
+      <div class="head-row"><h2>My plan</h2><button class="fb-mini" type="button" data-act="feedback" data-arg="suggestion|My plan" aria-label="Send feedback about My plan"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button></div>
+      <p class="lede">Edit your card, then send the update to the group in Signal. It's signed by this phone, so others know it came from you.</p>
+      ${st.pendingIdentity ? `<p class="notice notice-info">Send your new identity first (Group tab). Until others accept it, they'll reject updates from this phone.</p>` : ''}
+      <form data-form="mine" class="mine-form">
+        <div class="panel">
+        <h3>Plan details</h3>
+        ${FIELDS.map(([k, label]) => `
+          <div class="field">
+            <label class="label" for="f-${k}">${esc(label)}</label>
+            <textarea class="area" id="f-${k}" name="${k}" rows="2">${esc(draft.fields[k])}</textarea>
+          </div>${k === 'trigger' ? routesEditor : ''}`).join('')}
+        </div>
+        <div class="panel" id="myPois">
+          <h3>My points of interest</h3>
+          <p class="small muted">Places the group should know about. Not tied to a route.</p>
+          ${draft.pois.map((p, pi) => `
+            <fieldset class="poi-edit" style="border-left-color:${p.type === '__new' ? 'var(--accent)' : typeInfo(p.type).color}">
+              <div class="poi-edit-row">
+                <select class="select" id="pt-${pi}" data-p="${pi}" data-k="type" aria-label="Type">
+                  ${POI_TYPES.map(([t, l]) => `<option value="${t}" ${p.type === t ? 'selected' : ''}>${esc(l)}</option>`).join('')}
+                  ${customTypes().filter(t => !t.retired || t.id === p.type).map(t => `<option value="${esc(t.id)}" ${p.type === t.id ? 'selected' : ''}>${esc(t.name)}${t.retired ? ' (retired)' : ''}</option>`).join('')}
+                  <option value="__new" ${p.type === '__new' ? 'selected' : ''}>New type…</option>
+                </select>
+                <input class="input" id="pl-${pi}" data-p="${pi}" data-k="label" value="${esc(p.label)}" placeholder="Name, e.g. Feed store" aria-label="Name">
+              </div>
+              ${p.type === '__new' ? `
+              <div class="newtype">
+                <label class="label" for="ntn-${pi}">New type name</label>
+                <input class="input" id="ntn-${pi}" data-p="${pi}" data-k="newName" value="${esc(p.newName || '')}" placeholder="e.g. Water source" maxlength="30">
+                <span class="label">Color</span>
+                <div class="swatches" role="group" aria-label="Color">
+                  ${SWATCHES.map(n => `<button class="swatch" type="button" style="background:var(--c-${n})" data-act="newTypeColor" data-arg="${pi}|${n}" aria-pressed="${String((p.newColor || 1) === n)}" aria-label="Color ${n}"></button>`).join('')}
+                </div>
+                <button class="btn btn-small" type="button" data-act="newTypeAdd" data-arg="${pi}">Create type</button>
+                <p class="small muted">Everyone gets this type when they import your update.</p>
+              </div>` : ''}
+              <input class="input mono" id="pc-${pi}" data-p="${pi}" data-k="coords" value="${esc(p.coords)}" placeholder="32.5632, -97.1417" autocomplete="off" aria-label="Coordinates">
+              <textarea class="area" id="pn-${pi}" data-p="${pi}" data-k="note" rows="2" placeholder="Notes: what's there, who to ask for, hours" aria-label="Notes">${esc(p.note)}</textarea>
+              <div class="row"><button class="btn btn-small btn-quiet" type="button" data-act="poiDel" data-arg="${pi}">Remove this point</button></div>
+            </fieldset>`).join('')}
+          <button class="btn btn-small" type="button" data-act="poiAdd">Add point of interest</button>
+        </div>
+        <button class="btn btn-primary btn-block" type="button" data-act="submitForm">Save and create update</button>
+      </form>
+      ${lastOutput && lastOutput.tab === 'mine' ? outputBlock() : ''}`;
+  }
+
+  function outputBlock() {
+    const o = lastOutput;
+    return `
+      <div class="panel" id="output">
+        <h3>${esc(o.title)}</h3>
+        <ol class="steps">${o.steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
+        ${o.code ? `<div class="field"><span class="label">One-time code. Say it, don't send it.</span><div class="code-big">${esc(o.code)}</div></div>
+        <p class="small muted">This package and code work for 48 hours, until ${esc(fmt((o.made || Date.now()) + PKG_TTL))}. After that, make a new one.</p>` : ''}
+        <label class="label" for="packetOut">${o.code ? 'Package' : 'Encrypted update'} · ${o.text.length} characters</label>
+        <textarea id="packetOut" class="area mono" rows="5" readonly>${esc(o.text)}</textarea>
+        <div class="row">
+          <button class="btn btn-primary" type="button" data-act="copy">Copy</button>
+          <button class="btn" type="button" data-act="outputClose">${o.newMember ? 'Cancel' : o.code ? 'Close' : 'Done'}</button>
+        </div>
+        ${o.newMember ? `<p class="small muted">Cancel removes ${esc(person(o.newMember)?.name || 'this person')} from the list, since they haven't joined yet.</p>` : ''}
+      </div>`;
+  }
+
+  async function viewImport() {
+    let preview = '';
+    if (pending) {
+      const p = pending.p;
+      if (pending.type === 'plan') {
+        const m = person(p.from);
+        preview = `
+          <h3>Update from ${esc(m.name)} <span class="chip chip-ok">Signed by ${esc(m.name)}</span></h3>
+          <p class="meta">rev ${m.rev} → rev ${p.rev} · sent ${esc(fmt(p.ts))}</p>
+          ${p.rev - m.rev > 1 ? `<p class="notice notice-info">You missed ${p.rev - m.rev - 1} earlier ${p.rev - m.rev - 1 === 1 ? 'update' : 'updates'} from ${esc(m.name)}. ${p.full ? 'This one brings you fully up to date.' : 'This one only has its own changes, so ask them for a fresh update.'}</p>` : ''}
+          ${p.full && !planChanges(m, p).length ? '<p class="small muted">Nothing differs from what you already have. Accepting just records the newer version.</p>' : ''}
+          ${(p.types || []).filter(t => !(st.poiTypes || []).some(x => x.id === t.id)).map(t => `<p class="notice notice-info"><span class="dot" style="background:var(--c-${t.color})"></span> New point type: <strong>${esc(t.name)}</strong>. Accepting adds it to your type list and filters.</p>`).join('')}
+          ${planChanges(m, p).map(k => `
+            <div class="change">
+              <span class="label">${esc(LABEL[k])}</span>
+              <span class="old">${k === 'routes' ? esc(routeSummary(m.routes)) : k === 'pois' ? esc(poiSummary(m.pois)) : (esc(m.fields[k]) || '(empty)')}</span>
+              <span class="new">${k === 'routes' ? esc(routeSummary(p.routes)) : k === 'pois' ? esc(poiSummary(p.pois)) : esc(p.fields[k])}</span>
+            </div>`).join('')}`;
+      } else if (pending.type === 'removedme') {
+        preview = `
+          <h3>${esc(pending.sender.name)}'s phone says this phone was removed <span class="chip chip-ok">Signed by ${esc(pending.sender.name)}</span></h3>
+          <div class="warn-loud"><strong class="big">Expected this?</strong><span>If not, don't accept. Contact the group another way first. A lost or stolen phone could send this.</span></div>
+          <p class="small">Either way, this phone can't open updates sent after this change, because it wasn't given the new group key. If the removal was a mistake, a teammate can restore you from the Group tab.</p>
+          <p class="small muted">Accepting marks this phone as removed. It keeps what it already has.</p>`;
+      } else if (pending.type === 'fbstatus') {
+        const it = p.item;
+        preview = `
+          <h3>${esc(pending.sender.name)} ${p.done ? 'marked feedback done' : 'reopened feedback'} <span class="chip chip-ok">Signed by ${esc(pending.sender.name)}</span></h3>
+          <p class="meta">${esc((FB_TYPES.find(t => t[0] === it.ftype) || [, 'Other'])[1])} · ${esc(it.section)} · from ${esc(person(it.from)?.name || 'a teammate')} · ${esc(fmt(it.ts))}</p>
+          ${it.region ? `<p><strong>Region:</strong> ${esc(it.region)}</p>` : ''}
+          ${it.text ? `<p class="fb-text">${esc(it.text)}</p>` : ''}
+          ${p.note ? `<p><strong>Note:</strong> ${esc(p.note)}</p>` : ''}
+          <p class="small muted">Accepting updates this item in your Feedback inbox${(st.feedback || []).some(f => f.id === it.id) ? '' : ' (and adds it, since you didn\'t have it yet)'}.</p>`;
+      } else if (pending.type === 'feedback') {
+        preview = `
+          <h3>Feedback from ${esc(pending.sender.name)} <span class="chip chip-ok">Signed by ${esc(pending.sender.name)}</span></h3>
+          <p class="meta">${esc((FB_TYPES.find(t => t[0] === p.ftype) || [, 'Other'])[1])} · ${esc(p.section)} · sent ${esc(fmt(p.ts))}</p>
+          ${p.region ? `<p><strong>Region:</strong> ${esc(p.region)}</p>` : ''}
+          ${p.text ? `<p class="fb-text">${esc(p.text)}</p>` : ''}
+          <p class="small muted">Accepting saves it to your Feedback inbox on the Group tab. It doesn't change anything else.</p>`;
+      } else if (pending.type === 'intent') {
+        preview = `
+          <h3>Intent updated by ${esc(pending.sender.name)} <span class="chip chip-ok">Signed by ${esc(pending.sender.name)}</span></h3>
+          <p class="meta">version ${curIntent().rev} → version ${p.rev} · sent ${esc(fmt(p.ts))}</p>
+          <div class="intent-box intent-doc">${renderDoc(p.text)}</div>`;
+      } else if (pending.type === 'types') {
+        preview = `
+          <h3>Point type change from ${esc(pending.sender.name)} <span class="chip chip-ok">Signed by ${esc(pending.sender.name)}</span></h3>
+          ${p.types.map(t => `<p class="small"><span class="dot" style="background:var(--c-${t.color})"></span> <strong>${esc(t.name)}</strong>: ${t.retired ? 'retired. Existing points keep it, but it stops appearing as a choice for new points.' : 'available again for new points.'}</p>`).join('')}`;
+      } else if (pending.type === 'identity') {
+        preview = `
+          <h3>${pending.isNew ? `New member: ${esc(p.name)}` : `${esc(p.name)}'s phone was restored`}</h3>
+          <p class="small">${pending.isNew
+            ? `Accepting adds ${esc(p.name)} to this phone's group list. Their updates will be checked against this identity from now on.`
+            : `${esc(p.name)} set up a new or reset phone. Accepting replaces their old identity, so updates from their old phone stop being accepted.`}</p>
+          <p class="meta">New identity ${esc(await fingerprint(p.signPub))}. If you can, confirm this with ${esc(p.name)} in person.</p>`;
+      } else if (pending.type === 'key') {
+        const names = p.removed.map(id => person(id)?.name || id).join(', ');
+        preview = `
+          <h3>${esc(pending.sender.name)} removed ${esc(names)} <span class="chip chip-ok">Signed by ${esc(pending.sender.name)}</span></h3>
+          <p class="small">Accepting installs a new group key (generation ${p.epoch}). ${esc(names)} won't be able to open anything sent after this, and updates from ${esc(names)} will be rejected.</p>`;
+      }
+      preview = `<div class="panel">${preview}
+        <div class="row"><button class="btn" type="button" data-act="discard">Discard</button><button class="btn btn-primary" type="button" data-act="accept">Accept</button></div></div>`;
+    }
+    return `
+      <h2>Import update</h2>
+      <p class="lede">Updates from teammates come in here: plan changes, new points, feedback, key changes and restores.</p>
+      <ol class="steps">
+        <li>In the Signal chat, press and hold the teammate's update message and tap <strong>Copy</strong>. Copy the text itself. Don't save or download it as a file.</li>
+        <li>Paste it in the box below and tap <strong>Open update</strong>.</li>
+        <li>Check the preview, then tap <strong>Accept</strong>. Nothing changes until you do.</li>
+      </ol>
+      <p class="small muted">Updates are scrambled text that starts with RALLY2. Only phones in the group can open them.</p>
+      ${removedBanner()}
+      <div class="panel">
+        <div class="field">
+          <label class="label" for="pasteIn">Paste update</label>
+          <textarea id="pasteIn" class="area mono" rows="5" placeholder="RALLY2.…"></textarea>
+        </div>
+        ${importMsg ? `<p class="notice ${importMsg.ok ? 'notice-ok' : 'notice-bad'}">${esc(importMsg.text)}</p>` : ''}
+        ${outbox ? `<button class="linkbtn small" type="button" data-act="fillOutbox">Demo: paste the last thing sent (${esc(outbox.label)})</button>` : ''}
+        <button class="btn btn-primary btn-block" type="button" data-act="openImport">Open update</button>
+      </div>
+      ${preview}`;
+  }
+
+  let intentEditing = false;
+  const curIntent = () => st.intent || { rev: 0, text: INTENT_START, by: null, ts: null };
+  function renderDoc(text) {
+    const out = []; let list = null, para = [];
+    const flushP = () => { if (para.length) { out.push(`<p>${esc(para.join(' '))}</p>`); para = []; } };
+    const flushL = () => { if (list) { out.push(`<ul>${list.map(li => `<li>${esc(li)}</li>`).join('')}</ul>`); list = null; } };
+    String(text).split('\n').forEach(line => {
+      const t = line.trim();
+      if (!t) { flushP(); flushL(); return; }
+      if (t.startsWith('## ')) { flushP(); flushL(); out.push(`<h3>${esc(t.slice(3))}</h3>`); return; }
+      if (t.startsWith('- ')) { flushP(); (list = list || []).push(t.slice(2)); return; }
+      flushL(); para.push(t);
+    });
+    flushP(); flushL();
+    return out.join('');
+  }
+  function viewIntent() {
+    const it = curIntent();
+    const who = it.by ? (person(it.by)?.name || 'a teammate') : null;
+    if (intentEditing) return `
+      <h2>Intent</h2>
+      <p class="lede">Edit the group's shared intent. When you save, it goes out as an update like everything else.</p>
+      <div class="panel">
+        <label class="label" for="intentText">Text</label>
+        <textarea id="intentText" class="area">${esc(it.text)}</textarea>
+        <p class="hint">Start a line with <code>## </code> for a heading and <code>- </code> for a bullet. Leave a blank line between paragraphs.</p>
+        <div class="row">
+          <button class="btn" type="button" data-act="intentCancel">Cancel</button>
+          <button class="btn btn-primary" type="button" data-act="intentSave">Save and create update</button>
+        </div>
+      </div>`;
+    return `
+      <div class="head-row"><h2>Intent</h2><button class="fb-mini" type="button" data-act="feedback" data-arg="suggestion|Intent" aria-label="Send feedback about Intent"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button></div>
+      <p class="lede">Why we're doing this and what we've agreed. The Guide explains how to use the app; this explains what it's for.</p>
+      <p class="meta">Version ${it.rev}${who ? ` · last edited by ${esc(who)}` : ''}${it.ts ? ` · ${esc(fmt(it.ts))}` : ''}</p>
+      ${lastOutput && lastOutput.tab === 'intent' ? outputBlock() : ''}
+      <div class="panel intent-doc">${renderDoc(it.text)}</div>
+      ${st.removedSelf ? '' : `<div class="row"><button class="btn" type="button" data-act="intentEdit">Suggest changes</button></div>
+      <p class="small muted">Anyone can edit. If two people edit at the same time, only the first update gets accepted, so it can help to send your ideas to one person who folds them in.</p>`}`;
+  }
+
+  async function viewGroup() {
+    const self = me();
+    const fps = {};
+    for (const r of st.roster) fps[r.id] = await fingerprint(r.sign);
+    const people = st.roster.map(r => {
+      const isMe = r.id === st.member;
+      const chip = isMe ? '<span class="chip chip-accent">You</span>'
+        : r.status === 'removed' ? '<span class="chip chip-bad">Removed</span>'
+        : !r.sign ? '<span class="chip">Waiting for identity</span>'
+        : '<span class="chip chip-ok">Active</span>';
+      let acts = '';
+      if (!isMe && r.status === 'active' && !st.removedSelf) {
+        acts = `
+          <div class="acts">
+            <button class="btn btn-small" type="button" data-act="restorePkg" data-arg="${r.id}">Restore ${esc(r.name)}</button>
+            <button class="btn btn-small btn-quiet" type="button" data-act="removeAsk" data-arg="${r.id}">Remove</button>
+          </div>`;
+      }
+      return `
+        <div class="person">
+          <span class="name">${esc(r.name)}</span>${chip}
+          <span class="fp">ID ${esc(fps[r.id])}</span>
+          ${acts}
+        </div>`;
+    }).join('');
+
+    return `
+      <h2>Group</h2>
+      <p class="lede">Who's in the group, and how to add, restore or remove someone.</p>
+      ${removedBanner()}
+      ${groupMsg ? `<p class="notice ${groupMsg.ok ? 'notice-ok' : 'notice-bad'}">${esc(groupMsg.text)}</p>` : ''}
+      ${st.pendingIdentity ? `
+        <div class="panel">
+          <h3>Send your new identity</h3>
+          <p class="small muted">This phone has a new identity. Post it to the Signal group so everyone's app trusts updates from this phone.</p>
+          <button class="btn btn-primary" type="button" data-act="identity">Create identity update</button>
+        </div>` : ''}
+      ${lastOutput && lastOutput.tab === 'group' ? outputBlock() : ''}
+      <div class="panel">
+        <div class="row" style="align-items:center;justify-content:space-between">
+          <h3>People</h3>
+          <span class="chip">Group key gen ${st.epoch}</span>
+        </div>
+        <div>${people}</div>
+      </div>
+      ${!st.removedSelf ? `
+      <form data-form="addPerson" class="panel">
+        <h3>Add a new person</h3>
+        <div class="field"><label class="label" for="newName">Their name</label>
+          <input id="newName" class="input" required maxlength="40"></div>
+        <button class="btn" type="button" data-act="submitForm">Create package for them</button>
+      </form>` : ''}
+      <form data-form="changePass" class="panel" autocomplete="off">
+        <h3>Change my password</h3>
+        <div class="field"><label class="label" for="cpCur">Current password</label><input id="cpCur" class="input" type="password" required></div>
+        <div class="field"><label class="label" for="cpNew1">New password</label><input id="cpNew1" class="input" type="password" minlength="6" required></div>
+        <div class="field"><label class="label" for="cpNew2">Type it again</label><input id="cpNew2" class="input" type="password" minlength="6" required></div>
+        <button class="btn" type="button" data-act="submitForm">Change password</button>
+      </form>
+      <div class="panel">
+        <h3>Erase this phone</h3>
+        <p class="small muted">Use this before switching to a new phone. It deletes the group's plans and your identity from this phone. A teammate can restore you on the new one.</p>
+        <button class="btn btn-danger" type="button" data-act="eraseThis">Erase Rally Book from this phone</button>
+      </div>
+      <div class="panel">
+        <h3>Point types</h3>
+        <p class="small muted">Built-in types are the same on every phone. Anyone can add a new type when adding a point under My plan. Types can be retired but not deleted, so existing points never lose theirs.</p>
+        <div class="region-checks">${POI_TYPES.map(([t, l]) => `<span class="check"><span class="dot" style="background:var(--t-${t})"></span>${esc(l)}</span>`).join('')}</div>
+        ${(st.poiTypes || []).length ? `<div>${st.poiTypes.map(t => `
+          <div class="type-row">
+            <span class="check"><span class="dot" style="background:var(--c-${t.color})"></span>${esc(t.name)}${t.retired ? ' <span class="chip">Retired</span>' : ''}</span>
+            ${st.removedSelf ? '' : `<button class="btn btn-small btn-quiet" type="button" data-act="typeRetire" data-arg="${esc(t.id)}">${t.retired ? 'Bring back' : 'Retire'}</button>`}
+          </div>`).join('')}</div>` : '<p class="small muted">No group-made types yet.</p>'}
+      </div>
+      <div class="panel">
+        <div class="head-row"><h3>Feedback inbox</h3><button class="btn btn-small" type="button" data-act="feedback">Send feedback</button></div>
+        <p class="small muted">Marking an item done or reopening it creates an update for the group, so everyone's inbox shows the same status.</p>
+        ${(() => {
+          const all = st.feedback || [];
+          if (!all.length) return '<p class="small muted">Nothing yet. Feedback appears here after you send it or import it.</p>';
+          const item = (f) => `
+          <div class="fb-item ${f.done ? 'done' : ''}">
+            <div class="poi-head"><span class="chip ${f.done ? 'chip-ok' : f.ftype === 'bug' ? 'chip-bad' : f.ftype === 'region' ? 'chip-accent' : ''}">${f.done ? 'Done' : esc((FB_TYPES.find(t => t[0] === f.ftype) || [, 'Other'])[1])}</span><span class="small muted">${esc(f.section)} · ${f.from === st.member ? 'sent by you' : 'from ' + esc(person(f.from)?.name || 'a teammate')} · ${esc(fmt(f.ts))}</span></div>
+            ${f.region ? `<span><strong>Region:</strong> ${esc(f.region)}</span>` : ''}
+            ${f.text ? `<span class="fb-text">${esc(f.text)}</span>` : ''}
+            ${f.done ? `<span class="small"><strong>Done</strong> by ${esc(f.doneBy === st.member ? 'you' : person(f.doneBy)?.name || 'a teammate')} · ${esc(fmt(f.doneTs))}${f.doneNote ? ` · ${esc(f.doneNote)}` : ''}</span>` : ''}
+            ${st.removedSelf ? '' : `<div><button class="btn btn-small btn-quiet" type="button" data-act="fbStatus" data-arg="${esc(f.id)}">${f.done ? 'Reopen' : 'Mark done'}</button></div>`}
+          </div>`;
+          const open = all.filter(f => !f.done), done = all.filter(f => f.done).sort((a, b) => (b.doneTs || 0) - (a.doneTs || 0));
+          return `${open.length ? `<span class="label">Open (${open.length})</span><div>${open.map(item).join('')}</div>` : '<p class="small muted">No open items.</p>'}
+            ${done.length ? `<span class="label">Done log (${done.length})</span><div>${done.map(item).join('')}</div>` : ''}`;
+        })()}
+      </div>
+      <p class="small muted">This phone's ID is ${esc(fps[self.id])}. If someone's ID ever changes without a restore, don't trust their updates.</p>`;
+  }
+
+  // ---------------- Actions ----------------
+  async function savePlan() {
+    const m = me();
+    const routes = [];
+    draft.routes.forEach((r, ri) => {
+      const name = (r.name || '').trim() || `Route ${ri + 1}`;
+      const pts = [];
+      r.points.forEach((w) => {
+        const label = (w.label || '').trim(), c = (w.coords || '').trim();
+        if (!label && !c) return;
+        const where = `${name}, waypoint ${letter(pts.length)}`;
+        if (!c) throw new Error(`${where} needs coordinates.`);
+        const g = parseCoords(c);
+        if (g.error) throw new Error(`${where}: ${g.error}`);
+        pts.push({ label: label || `Point ${letter(pts.length)}`, lat: g.lat, lon: g.lon });
+      });
+      if (!pts.length && !(r.note || '').trim()) return;
+      const regions = [];
+      (r.regions || []).forEach(g => { const t = String(g).trim(); if (t && !regions.some(x => rkey(x) === rkey(t))) regions.push(t); });
+      routes.push({ name, note: (r.note || '').trim(), regions, points: pts });
+    });
+    const pois = [];
+    draft.pois.forEach((p, pi) => {
+      const label = (p.label || '').trim(), c = (p.coords || '').trim(), note = (p.note || '').trim();
+      if (!label && !c && !note) return;
+      const where = `Point of interest ${label ? '"' + label + '"' : pi + 1}`;
+      if (!c) throw new Error(`${where} needs coordinates.`);
+      const g = parseCoords(c);
+      if (g.error) throw new Error(`${where}: ${g.error}`);
+      if (p.type === '__new') throw new Error(`${where}: finish creating the new type, or pick an existing one.`);
+      pois.push({ type: typeInfo(p.type).id, label: label || typeInfo(p.type).label, note, lat: g.lat, lon: g.lon });
+    });
+    const changes = FIELDS.map(([k]) => k).filter(k => (draft.fields[k] || '').trim() !== (m.fields[k] || ''));
+    const routesChanged = JSON.stringify(routes) !== JSON.stringify(m.routes || []);
+    if (routesChanged) changes.push('routes');
+    const poisChanged = JSON.stringify(pois) !== JSON.stringify(m.pois || []);
+    if (poisChanged) changes.push('pois');
+    if (!changes.length) { toast('No changes to send.'); return; }
+    const fields = {};
+    changes.filter(k => k !== 'routes' && k !== 'pois').forEach(k => { m.fields[k] = draft.fields[k].trim(); fields[k] = m.fields[k]; });
+    if (routesChanged) m.routes = routes;
+    if (poisChanged) m.pois = pois;
+    mergeTypes(draft.newTypes);
+    const usedCustom = [...new Set(m.pois.map(p => p.type).filter(t => !POI_LABEL[t]))];
+    const typesOut = (st.poiTypes || []).filter(t => usedCustom.includes(t.id));
+    m.rev += 1; m.updated = Date.now(); m.lastChanged = changes;
+    draft = null; openEditRoutes = null;
+    // Full card every time, so a phone that missed an earlier update still ends up exactly right.
+    const text = await sealPacket({ kind: 'plan-update', full: true, from: m.id, rev: m.rev, ts: m.updated, changes, fields: { ...m.fields }, routes: m.routes || [], pois: m.pois || [], ...(typesOut.length ? { types: typesOut } : {}) });
+    await saveSt();
+    setOutput('mine', `Plan update ready (rev ${m.rev})`, text, null, ['Tap Copy.', 'Paste it into your group chat in Signal.', 'Each person copies it and taps Import.']);
+    outbox = { text, label: `${m.name}'s rev ${m.rev}` };
+    await render();
+    $('#output')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function setOutput(tabName, title, text, code, steps, extra = {}) { lastOutput = { tab: tabName, title, text, code, steps, ...extra }; }
+
+  async function openImport() {
+    const raw = $('#pasteIn').value.replace(/\s+/g, '');
+    pending = null;
+    const fail = (t) => { importMsg = { ok: false, text: t }; return render(); };
+    if (!raw) return fail('Paste an update first.');
+    if (raw.startsWith('RALLYR.')) return fail('This is a restore package for setting up a phone. Open it from "Restore from a teammate" on the lock screen of the phone being set up.');
+    const m = raw.match(/^RALLY2\.(\d+)\.([A-Za-z0-9+/=]+)$/);
+    if (!m) return fail("This doesn't look like a Rally Book update. Make sure the whole message was copied.");
+    const gen = Number(m[1]);
+    if (st.removedSelf) return fail("This phone was removed from the group, so it can't open new updates.");
+    const k = st.keys[gen];
+    if (!k) return fail(gen > st.epoch
+      ? "This update uses a newer group key this phone doesn't have. If someone was removed recently, import that key change first. If this phone was the one removed, this is expected."
+      : 'This update uses a group key this phone has never had.');
+    let env;
+    try { env = JSON.parse(td.decode(await aesOpen(await groupKey(unb64(k)), unb64(m[2])))); }
+    catch { return fail("This update couldn't be opened. Part of it may have been cut off when copying."); }
+    const p = env.p, sig = env.s;
+    const sender = person(p.from);
+
+    if (p.kind === 'identity') {
+      if (!(await verifyWith(p.signPub, p, sig))) return fail("This identity update failed its check. Don't trust it.");
+      if (gen < st.epoch) return fail(`This was sent before the group key changed. Ask ${p.name} to send it again.`);
+      if (sender && sender.status === 'removed') return fail(`${p.name} was removed from the group, so their new identity wasn't accepted.`);
+      if (sender && sender.sign && sender.sign.x === p.signPub.x) return fail(`You already have ${p.name}'s current identity.`);
+      pending = { type: 'identity', p, isNew: !sender }; importMsg = null; return render();
+    }
+    if (!sender) return fail("This update is from someone who isn't in this phone's group list.");
+    if (sender.status === 'removed') return fail(`${sender.name} was removed from the group. Their updates are no longer accepted.`);
+    if (!sender.sign || !(await verifyWith(sender.sign, p, sig))) return fail(`This update claims to be from ${sender.name}, but it isn't signed by ${sender.name}'s phone. Don't trust it.`);
+
+    if (p.kind === 'plan-update') {
+      if (gen < st.epoch) return fail(`${sender.name} sent this before the group key changed. Ask them to send it again.`);
+      if (p.rev <= sender.rev) return fail(`You already have ${sender.name}'s plan at rev ${sender.rev}. This update is rev ${p.rev}, so it was ignored.`);
+      pending = { type: 'plan', p }; importMsg = null; return render();
+    }
+    if (p.kind === 'key-change') {
+      if (p.epoch <= st.epoch) return fail('This phone already has this key change.');
+      if (p.removed.includes(st.member)) { pending = { type: 'removedme', p, sender }; importMsg = null; return render(); }
+      if (!p.wraps[st.member]) return fail("This key change doesn't include a key for this phone. Ask the sender to restore you.");
+      pending = { type: 'key', p, sender }; importMsg = null; return render();
+    }
+    if (p.kind === 'feedback-status') {
+      if (!p.item || !p.item.id) return fail("This doesn't look like a feedback status update.");
+      const cur = (st.feedback || []).find(f => f.id === p.item.id);
+      if (cur && (cur.doneTs || 0) >= p.ts) return fail('You already have this status (or a newer one) for that item.');
+      pending = { type: 'fbstatus', p, sender }; importMsg = null; return render();
+    }
+    if (p.kind === 'feedback') {
+      if ((st.feedback || []).some(f => f.id === p.id)) return fail('This feedback is already in your inbox.');
+      pending = { type: 'feedback', p, sender }; importMsg = null; return render();
+    }
+    if (p.kind === 'intent-update') {
+      if (gen < st.epoch) return fail(`${sender.name} sent this before the group key changed. Ask them to send it again.`);
+      const cur = curIntent();
+      if (p.rev <= cur.rev) return fail(`You already have version ${cur.rev} of the intent. This update is version ${p.rev}, so it was ignored. If it has different changes, ask ${sender.name} to start from version ${cur.rev} and send it again.`);
+      pending = { type: 'intent', p, sender }; importMsg = null; return render();
+    }
+    if (p.kind === 'types-update') {
+      if (!Array.isArray(p.types)) return fail("This doesn't look like a point type update.");
+      pending = { type: 'types', p, sender }; importMsg = null; return render();
+    }
+    if (p.app && p.app > APP_VERSION) return fail(`This update was made with a newer version of Rally Book (${p.app}). This phone has ${APP_VERSION}. Update the app, then import it again.`);
+    return fail("This kind of update isn't supported by this version of the app.");
+  }
+
+  async function accept() {
+    const p = pending.p;
+    if (pending.type === 'plan') {
+      const m = person(p.from);
+      if (p.types) mergeTypes(p.types);
+      const diff = planChanges(m, p);
+      if (p.full) { m.fields = { ...emptyFields(), ...p.fields }; m.routes = p.routes || []; m.pois = p.pois || []; }
+      else p.changes.forEach(k => { if (k === 'routes') m.routes = p.routes || []; else if (k === 'pois') m.pois = p.pois || []; else m.fields[k] = p.fields[k]; });
+      m.rev = p.rev; m.updated = p.ts; m.lastChanged = diff;
+      importMsg = { ok: true, text: `${m.name}'s plan updated to rev ${m.rev}. See it under Plans.` };
+    } else if (pending.type === 'removedme') {
+      st.removedSelf = true;
+      importMsg = { ok: false, text: `This phone is now marked as removed. It keeps what it already had but can't open anything new.` };
+    } else if (pending.type === 'fbstatus') {
+      st.feedback = st.feedback || [];
+      let f = st.feedback.find(x => x.id === p.item.id);
+      if (!f) { f = { ...p.item }; st.feedback.unshift(f); }
+      f.done = !!p.done; f.doneBy = p.from; f.doneTs = p.ts; f.doneNote = p.note || '';
+      importMsg = { ok: true, text: `Feedback ${p.done ? 'marked done' : 'reopened'}. See the Feedback inbox on the Group tab.` };
+    } else if (pending.type === 'feedback') {
+      st.feedback = st.feedback || [];
+      st.feedback.unshift({ id: p.id, from: p.from, ts: p.ts, ftype: p.ftype, section: p.section, text: p.text, region: p.region, done: false });
+      importMsg = { ok: true, text: 'Feedback saved to your inbox on the Group tab.' };
+    } else if (pending.type === 'intent') {
+      st.intent = { rev: p.rev, text: p.text, by: p.from, ts: p.ts };
+      importMsg = { ok: true, text: `Intent updated to version ${p.rev}. See it under Intent at the top.` };
+    } else if (pending.type === 'types') {
+      mergeTypes(p.types);
+      importMsg = { ok: true, text: `Point types updated.` };
+    } else if (pending.type === 'identity') {
+      let m = person(p.from);
+      if (!m) { m = { id: p.from, name: p.name, status: 'active', rev: 0, updated: p.ts, lastChanged: [], fields: emptyFields(), routes: [] }; st.roster.push(m); }
+      m.sign = p.signPub; m.dh = p.dhPub;
+      importMsg = { ok: true, text: pending.isNew ? `${p.name} added to the group.` : `${p.name}'s new phone is trusted. Their old phone's updates will be rejected.` };
+    } else if (pending.type === 'key') {
+      const dk = await dhKey(st.dhPriv, p.ephPub);
+      const raw = await aesOpen(dk, unb64(p.wraps[st.member]));
+      st.keys[p.epoch] = b64(raw); st.epoch = p.epoch;
+      p.removed.forEach(id => { const r = person(id); if (r) r.status = 'removed'; });
+      const names = p.removed.map(id => person(id)?.name || id).join(', ');
+      importMsg = { ok: true, text: `New group key installed (generation ${p.epoch}). ${names} can no longer open new updates.` };
+    }
+    if (importMsg && importMsg.ok) importMsg.text += ' Now give the message a thumbs-up in Signal so the sender knows you have it.';
+    pending = null;
+    await saveSt();
+    render();
+  }
+
+  async function removePerson(id) {
+    const target = person(id);
+    const newRaw = rand(32);
+    const eph = await genPair('dh');
+    const wraps = {}, skipped = [];
+    for (const r of st.roster) {
+      if (r.status !== 'active' || r.id === id || r.id === st.member) continue;
+      if (!r.dh) { skipped.push(r.name); continue; }
+      wraps[r.id] = b64(await aesSeal(await dhKey(eph.priv, r.dh), newRaw));
+    }
+    const payload = { kind: 'key-change', from: st.member, ts: Date.now(), epoch: st.epoch + 1, removed: [id], ephPub: eph.pub, wraps };
+    const text = await sealPacket(payload); // sealed with the current key so everyone can open the envelope; only remaining members can unwrap the new key
+    st.keys[payload.epoch] = b64(newRaw); st.epoch = payload.epoch; target.status = 'removed';
+    await saveSt();
+    confirmRemove = null;
+    groupMsg = { ok: true, text: `${target.name} removed. This phone now uses group key generation ${st.epoch}.${skipped.length ? ` ${skipped.join(', ')} had no identity on file, so restore them afterward.` : ''}` };
+    setOutput('group', 'Key change ready', text, null, [
+      `Remove ${target.name} from the Signal group first.`,
+      'Tap Copy, then paste it into the Signal group.',
+      'Everyone else imports it to get the new key.']);
+    outbox = { text, label: `${me().name}'s key change` };
+    render();
+  }
+
+  async function makePackage(id, newName) {
+    if (newName) {
+      const base = newName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'member';
+      id = base + '-' + b64(rand(3)).replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toLowerCase();
+      st.roster.push({ id, name: newName, status: 'active', sign: null, dh: null, rev: 0, updated: Date.now(), lastChanged: [], fields: emptyFields(), routes: [] });
+      await saveSt();
+    }
+    const target = person(id);
+    const code = makeCode();
+    const cSalt = rand(16);
+    const k = await pbkdf(normCode(code), cSalt);
+    const data = { kind: 'restore', from: st.member, ts: Date.now(), member: id, epoch: st.epoch, key: st.keys[st.epoch], roster: st.roster };
+    const text = 'RALLYR.' + b64(cat(cSalt, await aesSeal(k, te.encode(JSON.stringify(data)))));
+    groupMsg = null;
+    setOutput('group', `${newName ? 'Add' : 'Restore'} ${target.name}`, text, code, [
+      `Send the package to ${target.name} in Signal.`,
+      `Read the code to ${target.name} in person or on a call. Never put it in the same chat.`,
+      `On their phone: Restore from a teammate, paste, enter the code, set a new password.`,
+      `They then send their new identity and everyone imports it.`], { made: data.ts, ...(newName ? { newMember: id } : {}) });
+    outboxRestore = { text, code, label: `${target.name}'s package` };
+    render();
+  }
+
+  async function sendIdentity() {
+    const m = me();
+    const text = await sealPacket({ kind: 'identity', from: m.id, name: m.name, signPub: m.sign, dhPub: m.dh, ts: Date.now() });
+    st.pendingIdentity = false; await saveSt();
+    groupMsg = null;
+    setOutput('group', 'Identity update ready', text, null, ['Tap Copy.', 'Paste it into the Signal group.', 'Each person imports it and taps Accept.']);
+    outbox = { text, label: `${m.name}'s identity` };
+    render();
+  }
+
+  async function changePass(form) {
+    if (form.cpNew1.value !== form.cpNew2.value) { groupMsg = { ok: false, text: "The two new passwords don't match." }; return render(); }
+    try { await aesOpen(await pbkdf(form.cpCur.value, salt), unb64(slotRead(slot).box)); }
+    catch { groupMsg = { ok: false, text: "Current password is wrong." }; return render(); }
+    salt = rand(16); pwKey = await pbkdf(form.cpNew1.value, salt);
+    await saveSt();
+    groupMsg = { ok: true, text: 'Password changed for this phone.' };
+    render();
+  }
+
+  // ---------------- Event wiring ----------------
+  async function busy(btn, fn) {
+    const label = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Working…'; }
+    try { await fn(); }
+    catch (err) { console.error(err); if ($('#lockView').hidden) toast(err.message || 'Something went wrong.'); else { lockErr = err.message || 'Something went wrong.'; showLock(); } }
+    finally { if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = label; } }
+  }
+
+  const actions = {
+    slot: (arg) => { slot = arg; lockErr = ''; confirmErase = false; lockMode = slotRead(arg) ? lockMode : lockMode; showLock(); },
+    lockMode: (arg) => { lockMode = arg; lockErr = ''; showLock(); },
+    setup: (arg, btn) => busy(btn, async () => { btn.textContent = 'Setting up 3 phones…'; await setupDemo(); slot = 'p1'; showLock(); toast('Demo group created.'); }),
+    eraseAll: () => ask({ title: 'Erase all demo phones?', body: 'This deletes all four demo phones on this device so you can start the demo over.', ok: 'Erase all', danger: true },
+      () => { SLOTS.forEach(slotClear); outbox = null; outboxRestore = null; slot = 'p1'; showLock(); toast('All demo phones erased.'); }),
+    eraseThis: () => ask({ title: 'Erase this phone?', body: "The group's plans and your identity will be deleted from this phone. This can't be undone. To use Rally Book again, a teammate has to restore you.", ok: 'Erase this phone', danger: true },
+      () => { slotClear(slot); lock(); toast('Rally Book data erased from this phone.'); }),
+    sheetNo: () => closeSheet(),
+    sheetYes: () => {
+      const run = sheetRun, values = {};
+      $('#sheet').querySelectorAll('input, select, textarea').forEach(el => { if (el.id) values[el.id] = el.type === 'checkbox' ? el.checked : el.value; });
+      closeSheet();
+      if (run) run(values);
+    },
+    fillRestore: () => { $('#rPkg').value = outboxRestore.text; $('#rCode').value = outboxRestore.code; },
+    lock: () => { closeSheet(); lock(); },
+    tab: (arg) => { if (arg !== 'intent') intentEditing = false; tab = arg; if (arg !== 'import') { pending = null; importMsg = null; } render(); window.scrollTo(0, 0); },
+    copy: async () => {
+      try { await navigator.clipboard.writeText(lastOutput.text); toast('Copied. Paste it into Signal.'); }
+      catch { const ta = $('#packetOut'); ta.focus(); ta.select(); toast('Selected. Use Copy from the menu.'); }
+    },
+    fillOutbox: () => { $('#pasteIn').value = outbox.text; },
+    openImport: (arg, btn) => busy(btn, openImport),
+    discard: () => { pending = null; importMsg = { ok: false, text: 'Update discarded. Nothing changed.' }; render(); },
+    accept: (arg, btn) => busy(btn, accept),
+    removeAsk: (arg) => { const r = person(arg); ask({ title: `Remove ${r.name}?`, body: `This creates a new group key and sends it to everyone except ${r.name}. Their phone keeps what it already has but can't open anything new. Take them out of the Signal group before you post it.`, ok: `Remove ${r.name}`, danger: true },
+      () => busy(null, () => removePerson(arg))); },
+    restorePkg: (arg) => { const r = person(arg); ask({ title: `Create a restore package for ${r.name}?`, body: `Anyone who has both the package and its code can read all of the group's plans. Only give them to ${r.name}, and read the code to them yourself.`, ok: 'Create package' },
+      () => busy(null, () => makePackage(arg))); },
+    identity: (arg, btn) => busy(btn, sendIdentity),
+    sheetLink: (arg, b, e) => {
+      const need = b.dataset.needs;
+      if (need && !document.getElementById(need)?.checked) { e.preventDefault(); toast('Check the box first.'); return; }
+      setTimeout(closeSheet, 60);
+    },
+    regionAdd: (arg) => {
+      const inp = $(`#ra-${arg}`); const name = (inp?.value || '').trim();
+      if (!name) { toast('Type a region name first.'); return; }
+      const r = draft.routes[+arg]; r.regions = r.regions || [];
+      const known = knownRegions().find(n => rkey(n) === rkey(name));
+      if (!r.regions.some(g => rkey(g) === rkey(name))) r.regions.push(known || name);
+      render();
+    },
+    regionMark: async (arg) => {
+      st.regionsDone = st.regionsDone || {};
+      const k = rkey(arg);
+      if (st.regionsDone[k]) delete st.regionsDone[k]; else st.regionsDone[k] = Date.now();
+      await saveSt();
+      const open = [...document.querySelectorAll('details.card')].map(d => d.open), y = window.scrollY;
+      await render();
+      document.querySelectorAll('details.card').forEach((d, i) => { d.open = !!open[i]; });
+      window.scrollTo(0, y);
+      toast(st.regionsDone[k] ? `${arg} marked as downloaded on this phone.` : `${arg} marked as not downloaded.`);
+    },
+    regionHelp: () => ask({ title: 'Download maps in Organic Maps', ok: 'Done', html: `
+      <p>Do this once, on Wi-Fi. Organic Maps is free and needs no account.</p>
+      <ol class="steps" style="color:var(--ink)">
+        <li>Open Organic Maps.</li>
+        <li>Tap the menu button (☰), then <strong>Download maps</strong>.</li>
+        <li>Choose a state from Rally Book's list and tap <strong>Download all</strong>.</li>
+        <li>Repeat for each state on the list.</li>
+      </ol>
+      <p class="small">Short on space? Instead of Download all, pick only the parts of each state you'll need. The notes on Rally Book's list say how much is enough.</p>
+      <p><strong>Alternatively,</strong> go to the map view, find the area you want, and zoom in. Organic Maps will offer a <strong>Download</strong> button for that area. Tap it.</p>
+      <h4 style="margin:4px 0 0">Then</h4>
+      <ol class="steps" style="color:var(--ink)">
+        <li>Come back to Rally Book and check each state as Downloaded.</li>
+        <li>Test it: turn on Airplane Mode and ask Organic Maps for directions between two towns. If it asks you to download something, that part is still missing.</li>
+      </ol>
+      <h4 style="margin:4px 0 0">Where do the downloads go?</h4>
+      <p class="small">Inside Organic Maps itself. They don't show up in the Files app. To see or delete them, open Organic Maps → ☰ → Download maps; downloaded areas are listed there with their sizes. To see the total space used, go to iPhone Settings → General → iPhone Storage → Organic Maps.</p>
+      <p class="notice notice-bad"><strong>Turn off iCloud sync in Organic Maps</strong> (in its settings) before importing any Rally Book route, so routes stay off iCloud.</p>
+      <p class="small muted">Button names can differ a little between app versions. Update your Organic Maps downloads on Wi-Fi every few months.</p>` }, null),
+    omAsk: (arg) => {
+      const [mid, ri] = arg.split('|');
+      const r = (person(mid)?.routes || [])[+ri];
+      if (!r || !r.points.length) return;
+      const regs = r.regions || [];
+      const missing = regs.filter(g => !regionDone(g));
+      const canShareFiles = canShareGpx();
+      const list = (a) => a.length < 3 ? a.join(' and ') : a.slice(0, -1).join(', ') + ', and ' + a[a.length - 1];
+      const mapNote = !regs.length
+        ? `<p class="notice notice-bad">No map regions are set for this route, so it may not work offline. Ask ${esc(person(mid).name)} to tag it.</p>`
+        : missing.length
+          ? `<p class="notice notice-bad"><strong>Maps not downloaded yet on this phone: ${esc(list(missing))}.</strong> The route will still import, but to use it without service, download ${missing.length === 1 ? 'that region' : 'those regions'} in Organic Maps first.</p>`
+          : `<p class="notice notice-ok">All map regions for this route are marked as downloaded on this phone (${esc(list(regs))}).</p>`;
+      const steps = canShareFiles ? `
+        <ol class="steps" style="color:var(--ink)">
+          <li>Tap <strong>Create route file</strong> below.</li>
+          <li>A menu of apps slides up from the bottom of the screen.</li>
+          <li>Tap <strong>Organic Maps</strong>. If you don't see it, swipe the row of apps or tap More.</li>
+          <li>Organic Maps opens and shows the route with all ${r.points.length} stops.</li>
+        </ol>
+        <p class="notice notice-bad"><strong>Don't tap Save to Files.</strong> This can put the route in iCloud.</p>` : `
+        <ol class="steps" style="color:var(--ink)">
+          <li>Click <strong>Create route file</strong> below. It saves a .gpx file to your Downloads folder.</li>
+          <li>Send that file to your phone in Signal (Note to Self).</li>
+          <li>On your phone, tap the file in Signal, tap the share button, then tap <strong>Organic Maps</strong>.</li>
+          <li>Delete the file from your Downloads folder when you're done.</li>
+        </ol>`;
+      const extra = pickedPois(`${mid}|${ri}`, r.points);
+      ask({ title: 'Open in Organic Maps', ok: 'Create route file', html: `
+        <p>This makes a route file with all ${r.points.length} stops of <strong>${esc(r.name)}</strong>${extra.length ? ` plus ${extra.length} selected ${extra.length === 1 ? 'point' : 'points'} of interest (${esc(extra.map(p => p.label).join(', '))})` : ''} for Organic Maps.</p>
+        ${mapNote}
+        ${steps}
+        <p><strong>To drive there:</strong> in Organic Maps, tap the pin you're heading to and choose to route to it. Organic Maps picks the roads, offline. ${esc(r.points.length > 2 ? "The line between pins only shows the owner's planned path for reference." : '')}</p>
+        <p class="small muted">The route stays in Organic Maps as a bookmark list. Delete it there when you no longer need it. Once it's in Organic Maps, it's no longer protected by Rally Book's encryption.</p>` },
+        () => shareGpx(r, { extra }));
+    },
+
+    wpAdd: (arg) => { draft.routes[+arg].points.push({ label: '', coords: '' }); render().then(() => $(`#wl-${arg}-${draft.routes[+arg].points.length - 1}`)?.focus()); },
+    wpDel: (arg) => { const [ri, wi] = arg.split(':').map(Number); draft.routes[ri].points.splice(wi, 1); render(); },
+    routeAdd: () => { draft.routes.push({ regions: [], name: `Route ${draft.routes.length + 1}`, note: '', points: [{ label: '', coords: '' }, { label: '', coords: '' }] }); (openEditRoutes = openEditRoutes || new Set()).add(draft.routes.length - 1); render().then(() => $(`#rn-${draft.routes.length - 1}`)?.focus()); },
+    routeDel: (arg) => { const r = draft.routes[+arg]; ask({ title: `Delete ${r.name || 'this route'}?`, body: 'The route and its waypoints are removed from your plan. Nothing is sent until you save and share an update.', ok: 'Delete route', danger: true },
+      () => { draft.routes.splice(+arg, 1); openEditRoutes = new Set(); render(); }); },
+    mapAsk: (arg) => {
+      const [mid, ri, app] = arg.split('|');
+      const m = person(mid), r = (m?.routes || [])[+ri];
+      if (!r || !r.points.length) return;
+      const pts = r.points, c = (p) => `${p.lat},${p.lon}`, last = pts[pts.length - 1];
+      if (app === 'google') {
+        const q = new URLSearchParams({ api: '1', destination: c(last), travelmode: 'driving' });
+        if (pts.length > 1) q.set('origin', c(pts[0]));
+        if (pts.length > 2) q.set('waypoints', pts.slice(1, -1).map(c).join('|'));
+        ask({ title: 'Open in Google Maps?', ok: 'Open Google Maps', href: `https://www.google.com/maps/dir/?${q}`, needs: 'mapAck', html: `
+          <div class="warn-loud">
+            <strong class="big">Turn on Incognito first</strong>
+            <span>Google Maps saves routes to your Google account unless Incognito is on. Rally Book can't switch it on for you.</span>
+          </div>
+          <ol class="steps" style="color:var(--ink)">
+            <li>Open Google Maps now.</li>
+            <li>Tap your profile picture, then Turn on Incognito mode.</li>
+            <li>Come back here, check the box, and tap Open.</li>
+          </ol>
+          <label class="check"><input type="checkbox" id="mapAck"> I turned on Incognito in Google Maps</label>
+          <p class="small muted">Even in Incognito, Google's servers see these coordinates to plan the route. All ${pts.length} points are included.</p>` }, null);
+      } else {
+        const href = pts.length > 1 ? `https://maps.apple.com/?saddr=${c(pts[0])}&daddr=${c(last)}&dirflg=d` : `https://maps.apple.com/?ll=${c(last)}&q=${encodeURIComponent(last.label)}`;
+        ask({ title: 'Open in Apple Maps?', ok: 'Open Apple Maps', href, needs: 'mapAck', html: `
+          <div class="warn-loud">
+            <strong class="big">Apple Maps has no Incognito mode</strong>
+            <span>This route will stay in Apple Maps Recents on this phone until you delete it.</span>
+          </div>
+          <p>After your trip, open Apple Maps, find the route under Recents, and swipe left to delete it.</p>
+          ${pts.length > 2 ? `<p><strong>Only the start and end points carry over.</strong> Follow the ${pts.length - 2} ${pts.length - 2 === 1 ? 'stop' : 'stops'} in between yourself.</p>` : ''}
+          <label class="check"><input type="checkbox" id="mapAck"> I understand and will delete it from Recents</label>
+          <p class="small muted">Apple's servers see these coordinates to plan the route.</p>` }, null);
+      }
+    },
+    copyAsk: (arg) => {
+      const [mid, ri, which] = arg.split('|');
+      const r = (person(mid)?.routes || [])[+ri];
+      if (!r || !r.points.length) return;
+      const all = which === 'all';
+      const text = all ? r.points.map((p, j) => `${letter(j)} ${p.label}: ${fmtLL(p)}`).join('\n') : fmtLL(r.points[+which]);
+      copySheet(text, all ? `all ${r.points.length} points of ${r.name}` : `${letter(+which)} ${r.points[+which].label}`, all);
+    },
+    carMove: (arg) => {
+      const t = $('#carTrack'); if (!t) return;
+      const n = JSON.parse(t.dataset.areas || '[]').length;
+      const next = (carIdx + Number(arg) + n) % n;
+      t.scrollTo({ left: next * t.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    },
+    poiAddFromPlans: () => {
+      tab = 'mine';
+      if (!draft) draft = makeDraft();
+      draft.pois.push({ type: 'storage', label: '', note: '', coords: '' });
+      render().then(() => { const el = $(`#pl-${draft.pois.length - 1}`); el?.scrollIntoView({ block: 'center' }); el?.focus({ preventScroll: true }); });
+    },
+    newTypeColor: (arg) => { const [pi, n] = arg.split('|').map(Number); draft.pois[pi].newColor = n; render(); },
+    newTypeAdd: (arg) => {
+      const pi = +arg, row = draft.pois[pi];
+      const name = (row.newName || '').trim();
+      if (!name) { toast('Type a name for the new type.'); return; }
+      const existing = findTypeByName(name);
+      if (existing) { row.type = existing; toast(`"${typeInfo(existing).label}" already exists, so this point uses it.`); render(); return; }
+      const t = { id: typeIdFor(name), name, color: row.newColor || 1, retired: false, by: st.member, ts: Date.now() };
+      draft.newTypes.push(t);
+      row.type = t.id; delete row.newName; delete row.newColor;
+      toast(`New type "${name}" created. Save to send it with your update.`);
+      render();
+    },
+    typeRetire: (arg) => {
+      const t = (st.poiTypes || []).find(x => x.id === arg);
+      if (!t) return;
+      const retiring = !t.retired;
+      ask({ title: retiring ? `Retire "${t.name}"?` : `Bring back "${t.name}"?`, ok: retiring ? 'Retire type' : 'Bring back',
+        body: retiring ? 'Points that already use it keep it. It just stops showing as a choice for new points. This creates an update to send to the group.' : 'It shows as a choice for new points again. This creates an update to send to the group.' },
+        () => busy(null, async () => {
+          const upd = { ...t, retired: retiring, ts: Date.now() };
+          mergeTypes([upd]);
+          const text = await sealPacket({ kind: 'types-update', from: st.member, ts: Date.now(), types: [upd] });
+          await saveSt();
+          setOutput('group', 'Point type update ready', text, null, ['Tap Copy.', 'Paste it into the Signal group.', 'Each person imports it and taps Accept.']);
+          outbox = { text, label: `${me().name}'s type update` };
+          render();
+        }));
+    },
+    intentEdit: () => { intentEditing = true; lastOutput = null; render().then(() => $('#intentText')?.focus()); },
+    intentCancel: () => { intentEditing = false; render(); },
+    intentSave: (arg, btn) => busy(btn, async () => {
+      const text = ($('#intentText')?.value || '').trim();
+      const it = curIntent();
+      if (!text) { toast('The intent can\'t be empty.'); return; }
+      if (text === it.text.trim()) { toast('No changes to send.'); return; }
+      st.intent = { rev: it.rev + 1, text, by: st.member, ts: Date.now() };
+      const out = await sealPacket({ kind: 'intent-update', from: st.member, ts: st.intent.ts, rev: st.intent.rev, text });
+      await saveSt();
+      intentEditing = false;
+      setOutput('intent', `Intent update ready (version ${st.intent.rev})`, out, null, ['Tap Copy.', 'Paste it into the Signal group.', 'Each person imports it and taps Accept.']);
+      outbox = { text: out, label: `${me().name}'s intent v${st.intent.rev}` };
+      await render(); window.scrollTo(0, 0);
+    }),
+    theme: () => {
+      theme = THEME_ORDER[(THEME_ORDER.indexOf(theme) + 1) % THEME_ORDER.length];
+      try { localStorage.setItem(THEME_KEY, theme); } catch {}
+      applyTheme();
+      toast(`Appearance: ${THEME_NAME[theme]}`);
+    },
+    feedback: (arg) => { const [t, sec] = (arg || '').split('|'); closePop(); feedbackSheet(t || 'suggestion', sec || ({ plans: 'Plans', mine: 'My plan', import: 'Import', group: 'Group', intent: 'Intent' }[tab] || 'Other')); },
+    poiPop: (arg, g) => openPop(g),
+    rpPick: (arg) => {
+      const parts = arg.split('|'), key = parts.slice(0, 2).join('|'), pk = parts.slice(2).join('|');
+      const sel = routePoiPick.get(key) || new Set();
+      if (sel.has(pk)) sel.delete(pk); else sel.add(pk);
+      routePoiPick.set(key, sel); keepView(render);
+    },
+    rpClear: (arg) => { routePoiPick.delete(arg); keepView(render); },
+    copyRoutePlus: (arg) => {
+      const [mid, ri] = arg.split('|');
+      const r = (person(mid)?.routes || [])[+ri];
+      if (!r) return;
+      const extra = pickedPois(arg, r.points);
+      const text = `${r.name}\n` + r.points.map((p, j) => `${letter(j)} ${p.label}: ${fmtLL(p)}`).join('\n')
+        + (extra.length ? '\nPoints of interest:\n' + extra.map(p => `#${p.num} ${p.label}: ${fmtLL(p)}`).join('\n') : '');
+      copySheet(text, `${r.name} with ${extra.length} selected ${extra.length === 1 ? 'point' : 'points'}`, true);
+    },
+    rpToggle: (arg) => { closePop(); if (routePoiOn.has(arg)) routePoiOn.delete(arg); else routePoiOn.add(arg); keepView(render); },
+    rpFilter: (arg) => {
+      const i = arg.lastIndexOf('|'), key = arg.slice(0, i), t = arg.slice(i + 1);
+      const h = routePoiHidden.get(key) || new Set();
+      if (h.has(t)) h.delete(t); else h.add(t);
+      routePoiHidden.set(key, h); closePop(); keepView(render);
+    },
+    poiPopClose: () => closePop(),
+    poiPopDetails: (arg) => {
+      closePop();
+      const d = document.querySelector(`details.poi-card[data-poi="${arg}"]`);
+      if (!d) return;
+      d.open = true;
+      d.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      d.classList.add('flash'); setTimeout(() => d.classList.remove('flash'), 1600);
+    },
+    fbStatus: (arg) => {
+      const f = (st.feedback || []).find(x => x.id === arg); if (!f) return;
+      const closing = !f.done;
+      ask({ title: closing ? 'Mark this item done?' : 'Reopen this item?', ok: closing ? 'Mark done' : 'Reopen', html: `
+        <div class="copy-box" style="font-family:var(--font-body)">${esc(f.region ? 'Region: ' + f.region + '. ' : '')}${esc(f.text || '')}</div>
+        <div class="field"><label class="label" for="fbNote">${closing ? 'What was done? (optional)' : 'Why reopen? (optional)'}</label>
+          <input class="input" id="fbNote" maxlength="120" placeholder="${closing ? 'e.g. Fixed in version 0.14' : 'e.g. Still happening on my phone'}"></div>
+        <p class="small muted">This creates an update for the group so everyone sees the same status.</p>` },
+        (v = {}) => busy(null, async () => {
+          const note = (v.fbNote || '').trim();
+          f.done = closing; f.doneBy = st.member; f.doneTs = Date.now(); f.doneNote = note;
+          const item = { id: f.id, from: f.from, ts: f.ts, ftype: f.ftype, section: f.section, text: f.text, region: f.region };
+          const out = await sealPacket({ kind: 'feedback-status', from: st.member, ts: f.doneTs, item, done: closing, note });
+          await saveSt();
+          tab = 'group';
+          setOutput('group', closing ? 'Status update ready: marked done' : 'Status update ready: reopened', out, null, ['Tap Copy.', 'Paste it into the Signal group.', 'Everyone imports it, and their inbox shows the same status.']);
+          outbox = { text: out, label: `${me().name}'s status update` };
+          await render(); window.scrollTo(0, 0);
+        }));
+    },
+    outputClose: async () => {
+      const o = lastOutput;
+      lastOutput = null;
+      if (o && o.newMember) {
+        const m = person(o.newMember);
+        if (m && !m.sign) {
+          st.roster = st.roster.filter(r => r.id !== o.newMember);
+          await saveSt();
+          if (outboxRestore && outboxRestore.label.startsWith(m.name)) outboxRestore = null;
+          toast(`Cancelled. ${m.name} wasn't added.`);
+        }
+      }
+      render();
+    },
+    checkUpdate: async () => {
+      closeSheet(); toast('Checking for updates…');
+      try {
+        const r = await window.__rbCheckUpdate();
+        if (r === 'found') toast('A new version is ready. Tap Install update at the bottom.');
+        else if (r === 'none') toast("You're on the latest version.");
+        else toast("Couldn't check right now. Try again when you have internet.");
+      } catch { toast("Couldn't check right now. Try again when you have internet."); }
+    },
+    guide: () => ask({ title: 'How Rally Book works', ok: 'Got it', html: `
+      <div class="guide">
+        <p class="small muted">For why we're doing this and what we've agreed, see Intent at the top.</p>
+        <p>Rally Book holds each household's plan for when we can't reach each other: where you'll be, when you'll leave, your routes, rally points and check-in times. It also holds points of interest everyone can use.</p>
+        <h4>If you can't reach anyone</h4>
+        <ul><li>Follow the plans. That's what they're for.</li><li>Check the "updated" date on each card. A plan is only as current as its last update.</li><li>Go to rally points at the times listed and wait as long as the plan says.</li></ul>
+        <h4>Sharing changes</h4>
+        <ul><li>Edit My plan, then tap Save and create update.</li><li>Copy the scrambled text and paste it into the Signal group.</li><li>Everyone else copies it, taps Import, checks the preview and taps Accept. Nothing changes until they accept.</li><li>After you accept, give the message a thumbs-up in Signal.</li><li>If you sent it: check that everyone gave it a thumbs-up. If someone hasn't after a few days, remind them to import it.</li></ul>
+        <h4>Your password</h4>
+        <ul><li>Everything is encrypted on this phone. Your password unlocks it and isn't stored anywhere.</li><li>10 wrong passwords in a row erases Rally Book from this phone.</li><li>Forgot it? Any teammate can restore you from the Group tab. They read you a code. Never send that code in the same chat.</li></ul>
+        <h4>Maps</h4>
+        <ul><li>Organic Maps is the offline map. Download every region on the Offline maps list before you need it.</li><li>With service, copy coordinates into Google Maps, but turn on Incognito first.</li><li>Anything you open in another app is outside Rally Book's protection.</li></ul>
+        <h4>Keep it current</h4>
+        <ul><li>Review your card every few months and after any move or change of plans.</li><li>Update Organic Maps on Wi-Fi now and then.</li><li>Lost a phone? Tell the group so someone can remove it.</li></ul>
+        <h4>Feedback</h4>
+        <ul><li>The speech-bubble button sends a bug report, suggestion or map region request. It makes an encrypted message for Signal, like any other update.</li></ul>
+        <h4>Appearance</h4>
+        <ul><li>The half-circle button at the top switches between Auto (matches your phone), Light and Dark. It's saved on this phone only.</li></ul>
+        <h4>Important</h4>
+        <ul><li>Rally Book does not replace 911 or emergency services. Call for help when you can.</li><li>Don't screenshot Rally Book. Screenshots aren't encrypted.</li></ul>
+        <p class="small muted">Rally Book version ${APP_VERSION}. Sample data in this prototype is made up.</p>
+        ${window.__rbCheckUpdate ? '<button class="btn btn-small" type="button" data-act="checkUpdate">Check for app updates</button><p class="small muted">Updates only install when you tap Install. Nothing changes on its own.</p>' : ''}
+      </div>` }, null),
+    poiAdd: () => { draft.pois.push({ type: 'storage', label: '', note: '', coords: '' }); render().then(() => $(`#pl-${draft.pois.length - 1}`)?.focus()); },
+    poiDel: (arg) => { draft.pois.splice(+arg, 1); render(); },
+    poiFilter: (arg) => {
+      poiFilter = poiFilter || new Set();
+      if (poiFilter.has(arg)) poiFilter.delete(arg); else poiFilter.add(arg);
+      closePop();
+      keepView(render);   // stays on the area being viewed (carIdx unchanged)
+    },
+    copyPoi: (arg) => {
+      const [mid, idx, num] = arg.split('|');
+      const p = (person(mid)?.pois || [])[+idx];
+      if (!p) return;
+      copySheet(fmtLL(p), `${num}. ${p.label}`, false);
+    },
+    poiAllAsk: () => {
+      const hidden = poiFilter || new Set();
+      const shown = allPois().filter(p => !hidden.has(typeInfo(p.type).id));
+      const phone = canShareGpx();
+      ask({ title: 'Open points in Organic Maps', ok: 'Create file', html: `
+        <p>This makes one file with the ${shown.length} points shown, so you can see them together on Organic Maps' map.</p>
+        <p class="notice notice-bad"><strong>This one does save to Organic Maps,</strong> as a bookmark list. Each point is named only by its number and type, like "3 Storage location". The details stay in Rally Book.</p>
+        ${phone ? `<ol class="steps" style="color:var(--ink)"><li>Tap <strong>Create file</strong>.</li><li>A menu of apps slides up. Tap <strong>Organic Maps</strong>.</li></ol>
+          <p class="notice notice-bad"><strong>Don't tap Save to Files.</strong> This can put the points in iCloud.</p>`
+        : `<ol class="steps" style="color:var(--ink)"><li>Click <strong>Create file</strong>. It saves to your Downloads folder.</li><li>Send it to your phone in Signal (Note to Self), then open it with Organic Maps.</li><li>Delete it from Downloads when you're done.</li></ol>`}
+        <p class="small muted">Delete the list in Organic Maps when you no longer need it.</p>` },
+        () => shareGpx({ name: 'Rally Book points', points: shown.map(p => ({ lat: p.lat, lon: p.lon, label: `${p.num} ${typeInfo(p.type).label}` })) }, { plain: true }));
+    },
+    setupMark: async (arg) => {
+      st.omSetup = st.omSetup || {};
+      st.omSetup[arg] = !st.omSetup[arg];
+      await saveSt();
+      const open = [...document.querySelectorAll('details.card')].map(d => d.open), y = window.scrollY;
+      await render();
+      document.querySelectorAll('details.card').forEach((d, i) => { d.open = !!open[i]; });
+      window.scrollTo(0, y);
+    },
+
+  };
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'sheet') { closeSheet(); return; }
+    if (!e.target.closest('.poi-pop') && !e.target.closest('[data-act="poiPop"]')) closePop();
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    if (b.tagName !== 'A') e.preventDefault();
+    actions[b.dataset.act]?.(b.dataset.arg, b, e);
+  });
+
+  document.addEventListener('toggle', (e) => {
+    const t = e.target;
+    if (t.classList?.contains('setup-done')) openSetup = t.open;
+    if (t.dataset?.route) { if (t.open) openRoutes.add(t.dataset.route); else openRoutes.delete(t.dataset.route); }
+    if (t.dataset?.editRoute !== undefined && openEditRoutes) { const n = +t.dataset.editRoute; if (t.open) openEditRoutes.add(n); else openEditRoutes.delete(n); }
+  }, true);
+  let carTimer = null;
+  document.addEventListener('scroll', (e) => {
+    if (e.target.id !== 'carTrack') return;
+    closePop();
+    clearTimeout(carTimer);
+    carTimer = setTimeout(() => {
+      const t = e.target, areas = JSON.parse(t.dataset.areas || '[]');
+      const i = Math.round(t.scrollLeft / Math.max(t.clientWidth, 1));
+      if (i === carIdx || !areas[i]) return;
+      carIdx = i;
+      const lab = $('#carLabel');
+      if (lab) lab.innerHTML = `${esc(areas[i][0])}<small>${i + 1} of ${areas.length} · ${areas[i][1]} ${areas[i][1] === 1 ? 'point' : 'points'}</small>`;
+    }, 80);
+  }, true);
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t.id === 'mapAck') {
+      const link = document.querySelector('#sheet [data-needs="mapAck"]');
+      if (link) { link.classList.toggle('is-off', !t.checked); link.setAttribute('aria-disabled', String(!t.checked)); }
+      return;
+    }
+    if (!draft || !t.closest('[data-form="mine"]')) return;
+    if (t.dataset.p !== undefined) {
+      draft.pois[+t.dataset.p][t.dataset.k] = t.value;
+      if (t.dataset.k === 'type') render().then(() => { if (t.value === '__new') $(`#ntn-${t.dataset.p}`)?.focus(); });
+      return;
+    }
+    if (t.dataset.region !== undefined) {
+      const r = draft.routes[+t.dataset.r]; r.regions = r.regions || [];
+      const k = rkey(t.dataset.region);
+      r.regions = r.regions.filter(g => rkey(g) !== k);
+      if (t.checked) r.regions.push(t.dataset.region);
+      return;
+    }
+    if (t.dataset.r !== undefined) {
+      const r = draft.routes[+t.dataset.r];
+      if (t.dataset.w !== undefined) r.points[+t.dataset.w][t.dataset.k] = t.value; else r[t.dataset.k] = t.value;
+    } else if (t.name && t.name in draft.fields) draft.fields[t.name] = t.value;
+  });
+
+  const forms = {
+    unlock: (f) => unlock($('#pass').value),
+    restore: (f) => restore(f),
+    mine: () => savePlan(),
+    addPerson: (f) => makePackage(null, f.newName.value.trim()),
+    changePass: (f) => changePass(f),
+  };
+  // Forms are driven by plain button clicks (not native submit), because some
+  // viewers and in-app previews silently block form submission.
+  const formCheck = {
+    restore: (f) => f.rPass1.value !== f.rPass2.value ? "The two passwords don't match." : '',
+    changePass: (f) => f.cpNew1.value !== f.cpNew2.value ? "The two new passwords don't match." : '',
+  };
+  const formConfirm = {
+    restore: () => ({ title: 'Restore this phone?', body: `Anything already on ${SLOT_LABEL[slot]} is replaced with the group's data from this package.`, ok: 'Restore this phone', danger: !!slotRead(slot) }),
+    addPerson: (f) => ({ title: `Create a package for ${f.newName.value.trim()}?`, body: "Anyone who has both the package and its code can read all of the group's plans. Only give them to this person, and read the code to them yourself.", ok: 'Create package' }),
+    changePass: () => ({ title: 'Change your password?', body: "You'll need the new password to unlock this phone from now on. If you forget it, a teammate has to restore you.", ok: 'Change password' }),
+  };
+  function runForm(f, btn) {
+    if (!f || !forms[f.dataset.form]) return;
+    if (f.checkValidity && !f.checkValidity()) { try { f.reportValidity(); } catch {} return; }
+    const problem = formCheck[f.dataset.form]?.(f);
+    if (problem) { toast(problem); return; }
+    const go = () => busy(btn || f.querySelector('[data-act="submitForm"]'), () => forms[f.dataset.form](f));
+    const c = formConfirm[f.dataset.form];
+    if (c) ask(c(f), go); else go();
+  }
+  actions.submitForm = (arg, btn) => runForm(btn.closest('[data-form]'), btn);
+  document.addEventListener('submit', (e) => { e.preventDefault(); runForm(e.target.closest('[data-form]')); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$('#sheet').hidden) { closeSheet(); return; }
+    if (!$('#sheet').hidden) return;
+    if (e.key !== 'Enter' || e.target.tagName !== 'INPUT') return;
+    const f = e.target.closest('[data-form]');
+    if (!f) return;
+    e.preventDefault();
+    runForm(f);
+  });
+
+  ['pointerdown', 'keydown', 'scroll'].forEach(ev => document.addEventListener(ev, () => { lastActivity = Date.now(); }, { passive: true }));
+  setInterval(() => { if (st && Date.now() - lastActivity > IDLE_MS) lock(); }, 15000);
+
+  if (!window.crypto || !crypto.subtle) {
+    $('#lockView').innerHTML = `<div class="lock-inner"><div class="brand">Rally <span>Book</span></div>
+      <p class="notice notice-bad">This viewer can't run the app's encryption. Open the file in Safari or Chrome instead of a file preview.</p></div>`;
+  } else {
+    showLock();
+  }
+})();
+</script>
+
+</body>
+</html>
