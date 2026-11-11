@@ -345,6 +345,20 @@ details.demo-tools[open] > summary { margin-bottom: 2px; }
 .pace-body { display: grid; gap: 2px; min-width: 0; }
 .pace-body strong { font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; }
 .comms-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ch-list { display: grid; }
+.ch-row { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); align-items: start; }
+.ch-row:first-child { border-top: 0; padding-top: 2px; }
+.ch-num { font-family: var(--font-mono); font-weight: 700; text-align: center; padding: 4px 0; border-radius: 6px; background: var(--chip, rgba(127,127,127,.15)); }
+.ch-meta { font-family: var(--font-mono); font-size: 14px; }
+details.ch-ref { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+details.ch-ref > summary { cursor: pointer; font-weight: 600; }
+details.ch-ref h4 { margin: 12px 0 4px; font-size: 14px; }
+.ch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 4px 12px; font-family: var(--font-mono); font-size: 13px; }
+.ch-edit { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 12px; margin: 0 0 10px; display: grid; gap: 8px; min-width: 0; }
+.ch-edit legend { padding: 0 6px; }
+.ch-edit-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; }
+.ch-edit-row.ch-even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.ch-soon { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; font-size: 14px; }
 .comms-panel > .head-row h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-transform: uppercase; letter-spacing: 0.01em; }
 @media (max-width: 359px) { header.top .wrap { gap: 3px; padding-left: 10px; padding-right: 10px; } header.top .brand { font-size: 15px; } header.top .icon-btn { padding: 5px 4px; font-size: 12px; } header.top .theme-btn { padding: 5px 5px; } }
 .back-link { justify-self: start; font-size: 14px; color: var(--on-bg); }
@@ -417,6 +431,10 @@ details.poi-panel > .poi-body { display: grid; gap: 14px; padding: 0 16px 16px; 
 :root[data-theme="dark"] .hero::after, :root[data-theme="night"] .hero::after { background: linear-gradient(180deg, rgba(8,11,14,.30) 0%, rgba(8,11,14,.55) 50%, rgba(6,8,10,.94) 100%); }
 :root[data-theme="dark"] .hero h2 { color: #FFFFFF; }
 :root[data-theme="dark"] .hero .lede { color: rgba(255,255,255,.82); }
+.hero .group-name { color: var(--muted); font-weight: 600; }
+:root[data-theme="dark"] .hero .group-name { color: rgba(255,255,255,.85); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero .group-name { color: rgba(255,255,255,.85); } }
+:root[data-theme="night"] .hero .group-name { color: var(--muted); }
 :root[data-theme="night"] .hero-art { filter: grayscale(1) brightness(.55); }
 :root[data-theme="night"] .hero h2 { color: var(--ink); }
 :root[data-theme="night"] .hero .lede { color: var(--muted); }
@@ -617,7 +635,7 @@ header.top { box-shadow: inset 0 -5px 0 #F5C400; }
   const poiBadge = (type, cls = '') => { const ti = typeInfo(type); return `<span class="poi-num ${cls}" style="background:${ti.color}" aria-hidden="true">${iconSvg(ti.icon, 15)}</span>`; };
   // Same symbol inside an SVG map at (x, y), sized to fit a marker of radius r.
   const mapIcon = (type, x, y, r) => { const s = (r * 1.25) / 24; return `<path d="${iconPath(typeInfo(type).icon)}" transform="translate(${(x - 12 * s).toFixed(1)} ${(y - 12 * s).toFixed(1)}) scale(${s.toFixed(3)})" fill="none" stroke="#fff" stroke-width="${(2.3 / s).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`; };
-  const APP_VERSION = '0.27.1';
+  const APP_VERSION = '0.28';
   const PKG_TTL = 48 * 3600000;   // restore packages work for 48 hours
   const INTENT_START = `## Why we're doing this
 When the power, phones or internet go down for more than a day or two, the hardest part isn't gear. It's not knowing where everyone is or what they'll do. Rally Book is our agreement, written down ahead of time.
@@ -692,8 +710,22 @@ This is a starting draft. Edit it together.`;
     ['backup', 'Backup channels', 'Other ways to reach each other.'],
     ['notes', 'Other notes', ''],
   ];
-  const COMMS_KEYS = [...COMMS_PACE.map(x => x[0]), ...COMMS_SCHED.map(x => x[0]), ...COMMS_SECTIONS.map(x => x[0])];
-  const COMMS_LABEL = Object.fromEntries([...COMMS_PACE.map(x => [x[0], `${x[2]} (${x[1]})`]), ...COMMS_SCHED.map(x => [x[0], `Check-in: ${x[1]}`]), ...COMMS_SECTIONS.map(x => [x[0], x[1]])]);
+  // Radio channel list: stored as one field ('channels', JSON text) so it travels in the normal comms update.
+  const CH_MAX = 10;
+  const CH_TYPES = [['gmrs', 'GMRS'], ['frs', 'FRS'], ['murs', 'MURS'], ['ham', 'Ham'], ['listen', 'Listen only'], ['other', 'Other']];
+  const CH_FIELDS = ['ch', 'name', 'freq', 'offset', 'tone', 'type', 'note'];
+  const chClean = (list) => (list || []).map(c => Object.fromEntries(CH_FIELDS.map(k => [k, String((c || {})[k] ?? '').trim()]))).filter(c => CH_FIELDS.some(k => k !== 'type' && c[k]));
+  const chParse = (v) => { try { const a = JSON.parse(v || '[]'); return Array.isArray(a) ? chClean(a).slice(0, CH_MAX) : []; } catch { return []; } };
+  const chText = (list) => { const a = chClean(list); return a.length ? JSON.stringify(a) : ''; };
+  const chType = (t) => (CH_TYPES.find(x => x[0] === t) || [, ''])[1];
+  const chLine = (c) => [c.ch && `Ch ${c.ch}`, c.name, c.freq && `${c.freq} MHz`, c.offset && `offset ${c.offset}`, c.tone && `tone ${c.tone}`, chType(c.type)].filter(Boolean).join(' · ') + (c.note ? ` (${c.note})` : '');
+  // Built-in reference (checked against FCC/NWS, Nov 2026). Read-only; not part of updates.
+  const FRS_GMRS = [
+    [1, '462.5625'], [2, '462.5875'], [3, '462.6125'], [4, '462.6375'], [5, '462.6625'], [6, '462.6875'], [7, '462.7125'],
+    [8, '467.5625'], [9, '467.5875'], [10, '467.6125'], [11, '467.6375'], [12, '467.6625'], [13, '467.6875'], [14, '467.7125'],
+    [15, '462.5500'], [16, '462.5750'], [17, '462.6000'], [18, '462.6250'], [19, '462.6500'], [20, '462.6750'], [21, '462.7000'], [22, '462.7250']];
+  const COMMS_KEYS = [...COMMS_PACE.map(x => x[0]), ...COMMS_SCHED.map(x => x[0]), ...COMMS_SECTIONS.map(x => x[0]), 'channels'];
+  const COMMS_LABEL = Object.fromEntries([...COMMS_PACE.map(x => [x[0], `${x[2]} (${x[1]})`]), ...COMMS_SCHED.map(x => [x[0], `Check-in: ${x[1]}`]), ...COMMS_SECTIONS.map(x => [x[0], x[1]]), ['channels', 'Radio channels']]);
   const emptyComms = () => Object.fromEntries(COMMS_KEYS.map(k => [k, '']));
   const RADIO_NOTE = "GMRS needs an FCC license: one per household, no test. Many Baofeng models, like the UV-5R, aren't certified for GMRS, so they shouldn't be used to transmit on GMRS channels. Use a GMRS-certified radio for those.";
 
@@ -911,6 +943,9 @@ This is a starting draft. Edit it together.`;
 
   // ---------- Approximate reference geography (hand-built, for orientation only) ----------
   const GEO = {
+    // Lower-48 outline and state names: a very rough sketch so points anywhere in the country have context.
+    usa: [[-124.7,48.4],[-123.2,49],[-95.2,49],[-95.2,49.4],[-89.6,48],[-84.6,46.5],[-82.5,43],[-83.1,42],[-79,42.8],[-76.2,43.6],[-75,44.8],[-71.5,45],[-70,46.7],[-69.2,47.4],[-67.8,47.1],[-67.8,45.7],[-67,44.8],[-68.8,44.3],[-70.2,43.6],[-70.8,42.9],[-70,41.8],[-71.4,41.4],[-72.9,41.2],[-74,40.6],[-74,39.6],[-75,38.9],[-75.4,38],[-76,36.9],[-75.5,35.2],[-76.6,34.7],[-78,33.9],[-79.2,33.2],[-80.9,32],[-81.4,30.7],[-80.6,28.4],[-80,26.7],[-80.4,25.2],[-81.1,25.1],[-81.8,26.1],[-82.7,27.9],[-82.8,29.2],[-84,30.1],[-85.4,29.7],[-86.5,30.4],[-88,30.7],[-89.6,30.2],[-89.4,29.1],[-90.8,29.1],[-93.8,29.7],[-94.8,29.3],[-96.6,28.3],[-97.4,27.4],[-97.2,25.9],[-99.1,26.4],[-99.5,27.5],[-100.6,28.7],[-101.4,29.8],[-102.4,29.8],[-103.2,29],[-104.5,29.6],[-106.5,31.8],[-108.2,31.8],[-108.2,31.33],[-111.07,31.33],[-114.82,32.49],[-117.1,32.5],[-118.5,34],[-120.6,34.5],[-121.9,36.6],[-122.5,37.7],[-123.8,39.4],[-124.4,40.4],[-124.2,42],[-124,44.6],[-123.9,46.2],[-124.7,48.4]],
+    labels: [['WASHINGTON',-120.5,47.4],['OREGON',-120.5,43.9],['CALIFORNIA',-119.5,37.2],['NEVADA',-116.9,39.3],['IDAHO',-114.6,44.2],['MONTANA',-109.6,47],['WYOMING',-107.5,43],['UTAH',-111.7,39.3],['COLORADO',-105.5,39],['NORTH DAKOTA',-100.5,47.5],['SOUTH DAKOTA',-100.2,44.4],['NEBRASKA',-99.8,41.5],['KANSAS',-98.4,38.5],['MINNESOTA',-94.3,46.3],['IOWA',-93.5,42],['MISSOURI',-92.5,38.4],['WISCONSIN',-89.9,44.6],['ILLINOIS',-89.2,40],['MICHIGAN',-84.7,43.7],['INDIANA',-86.3,39.9],['OHIO',-82.8,40.3],['KENTUCKY',-85.3,37.5],['TENNESSEE',-86.3,35.8],['MISSISSIPPI',-89.7,32.7],['ALABAMA',-86.8,32.8],['GEORGIA',-83.4,32.7],['FLORIDA',-81.7,28.6],['S. CAROLINA',-80.9,33.9],['N. CAROLINA',-79.4,35.5],['VIRGINIA',-78.8,37.5],['W. VA.',-80.6,38.6],['PENNSYLVANIA',-77.6,40.9],['NEW YORK',-75.5,42.9],['VT',-72.7,44],['NH',-71.6,43.7],['MAINE',-69.2,45.4],['MA',-71.8,42.3],['CT',-72.7,41.6],['NJ',-74.5,40.1],['MD',-76.8,39]],
     states: [
       ['ARIZONA', [[-114.82,32.49],[-111.07,31.33],[-109.05,31.33],[-109.05,37],[-114.05,37],[-114.05,36.2],[-114.75,35.1],[-114.6,34.8],[-114.4,34.1],[-114.75,33.4],[-114.5,33],[-114.82,32.49]]],
       ['NEW MEXICO', [[-109.05,31.33],[-108.21,31.33],[-108.21,31.78],[-106.53,31.78],[-106.62,32],[-103.06,32],[-103.04,36.5],[-103,37],[-109.05,37],[-109.05,31.33]]],
@@ -930,18 +965,30 @@ This is a starting draft. Edit it together.`;
       ['Granbury',32.4421,-97.7942,3],['Glen Rose',32.2346,-97.7553,3],['Midlothian',32.4824,-96.9945,3],['Sherman',33.6357,-96.6089,3],['Texarkana',33.4418,-94.0377,3],
       ['Durant',33.994,-96.3708,3],['McAlester',34.9334,-95.7697,3],['Tahlequah',35.9154,-94.97,3],['Roswell',33.3943,-104.523,3],['Deming',32.2687,-107.7586,3],
       ['Lordsburg',32.3503,-108.7087,3],['Mesa',33.4152,-111.8315,3],['Pecos',31.4229,-103.4932,3],['Fort Stockton',30.894,-102.8793,3],['Van Horn',31.0399,-104.8307,3],
-      ['Hot Springs',34.5037,-93.0552,3],['Del Rio',29.3627,-100.8968,2],['Alpine',30.3585,-103.661,3],['Presidio',29.5607,-104.3721,3],['San Angelo',31.4638,-100.437,2],['Odessa',31.8457,-102.3676,3],['Big Bend NP',29.25,-103.25,3],['Willcox',32.2529,-109.832,3],
+      ['Hot Springs',34.5037,-93.0552,3],['Del Rio',29.3627,-100.8968,2],['Alpine',30.3585,-103.661,3],['Presidio',29.5607,-104.3721,3],['San Angelo',31.4638,-100.437,2],['Odessa',31.8457,-102.3676,3],
+      ['Seattle',47.61,-122.33,1],['Portland',45.52,-122.68,1],['San Francisco',37.77,-122.42,1],['Los Angeles',34.05,-118.24,1],['San Diego',32.72,-117.16,1],['Las Vegas',36.17,-115.14,1],['Salt Lake City',40.76,-111.89,1],['Boise',43.62,-116.2,1],['Denver',39.74,-104.99,1],['Billings',45.78,-108.5,1],['Omaha',41.26,-95.93,1],['Kansas City',39.1,-94.58,1],['Minneapolis',44.98,-93.27,1],['Chicago',41.88,-87.63,1],['St. Louis',38.63,-90.2,1],['Memphis',35.15,-90.05,1],['Nashville',36.16,-86.78,1],['New Orleans',29.95,-90.07,1],['Atlanta',33.75,-84.39,1],['Miami',25.76,-80.19,1],['Jacksonville',30.33,-81.66,1],['Charlotte',35.23,-80.84,1],['Washington DC',38.91,-77.04,1],['Philadelphia',39.95,-75.17,1],['New York',40.71,-74.01,1],['Boston',42.36,-71.06,1],['Detroit',42.33,-83.05,1],['Pittsburgh',40.44,-79.99,1],
+      ['Knoxville',35.96,-83.92,2],['Asheville',35.6,-82.55,2],['Chattanooga',35.05,-85.31,2],['Colorado Springs',38.83,-104.82,2],['Cheyenne',41.14,-104.82,2],['Spokane',47.66,-117.43,2],['Reno',39.53,-119.81,2],['Sacramento',38.58,-121.49,2],['Fargo',46.88,-96.79,2],['Sioux Falls',43.55,-96.73,2],['Wichita',37.69,-97.34,2],['Des Moines',41.59,-93.62,2],['Milwaukee',43.04,-87.91,2],['Indianapolis',39.77,-86.16,2],['Louisville',38.25,-85.76,2],['Columbus',39.96,-83,2],['Cincinnati',39.1,-84.51,2],['Birmingham',33.52,-86.8,2],['Jackson',32.3,-90.18,2],['Tampa',27.95,-82.46,2],['Orlando',28.54,-81.38,2],['Raleigh',35.78,-78.64,2],['Richmond',37.54,-77.44,2],['Cleveland',41.5,-81.69,2],['Helena',46.59,-112.04,2],['Rapid City',44.08,-103.23,2],['Albany',42.65,-73.75,2],['Big Bend NP',29.25,-103.25,3],['Willcox',32.2529,-109.832,3],
     ],
     highways: [
-      ['I-20', [[-104.25,31.08],[-103.49,31.42],[-102.08,32.0],[-99.73,32.45],[-97.8,32.76],[-97.33,32.76],[-96.8,32.78],[-95.3,32.35],[-93.75,32.53]]],
-      ['I-10', [[-114.6,33.6],[-112.07,33.45],[-110.97,32.22],[-110.29,31.97],[-109.83,32.25],[-108.71,32.35],[-107.76,32.27],[-106.76,32.32],[-106.49,31.76],[-104.83,31.04],[-102.88,30.89],[-100.6,30.55],[-98.49,29.42],[-95.37,29.76],[-93.8,30.1]]],
-      ['I-40', [[-114.6,34.8],[-111.65,35.2],[-109.2,35.1],[-106.65,35.08],[-103.7,35.17],[-101.83,35.22],[-99.4,35.4],[-97.52,35.47],[-94.4,35.39],[-92.29,34.75]]],
-      ['I-35', [[-99.5,27.5],[-98.49,29.42],[-97.74,30.27],[-97.15,31.55],[-97.13,32.0],[-97.33,32.76],[-97.13,33.21],[-97.13,33.63],[-97.52,35.47],[-97.3,37]]],
+      ['I-5', [[-117.16,32.72],[-118.24,34.05],[-119,35.4],[-121.49,38.58],[-122.4,40.6],[-123,42.4],[-123,44.9],[-122.68,45.52],[-122.33,47.61],[-122.5,49]]],
+      ['I-15', [[-117.16,32.72],[-117.3,34.1],[-117,34.9],[-115.14,36.17],[-113.58,37.1],[-112.3,38.6],[-111.89,40.76],[-112.45,42.87],[-112.04,43.49],[-112.53,46],[-112.04,46.59],[-111.3,47.5],[-111.9,49]]],
+      ['I-55', [[-90.07,29.95],[-90.18,32.3],[-90.05,35.15],[-90.2,38.63],[-89.65,39.8],[-87.63,41.88]]],
+      ['I-65', [[-88.04,30.69],[-86.3,32.38],[-86.8,33.52],[-86.78,36.16],[-85.76,38.25],[-86.16,39.77],[-87.4,41.6]]],
+      ['I-70', [[-112.3,38.6],[-110.2,39],[-108.55,39.06],[-106.3,39.6],[-104.99,39.74],[-101.7,39.3],[-97.6,38.8],[-94.58,39.1],[-90.2,38.63],[-86.16,39.77],[-83,39.96],[-80.7,40.07],[-79,39.9],[-76.7,39.4]]],
+      ['I-75', [[-80.3,25.9],[-81.8,26.6],[-82.46,27.95],[-82.3,29.65],[-83.5,31.45],[-83.63,32.84],[-84.39,33.75],[-85.31,35.05],[-83.92,35.96],[-84.5,38.04],[-84.51,39.1],[-84.2,39.76],[-83.6,41.65],[-83.05,42.33],[-84.4,45.8],[-84.35,46.5]]],
+      ['I-80', [[-122.42,37.77],[-121.49,38.58],[-119.81,39.53],[-117.7,40.97],[-115.76,40.83],[-111.89,40.76],[-110,41.3],[-104.82,41.14],[-100.8,41.13],[-98.3,40.9],[-95.93,41.26],[-93.62,41.59],[-90.6,41.5],[-87.63,41.6],[-84.5,41.6],[-81.69,41.45],[-80,41.1],[-77,41],[-74.1,40.85]]],
+      ['I-90', [[-122.33,47.61],[-120.5,47.1],[-117.43,47.66],[-114,46.87],[-112.5,46],[-108.5,45.78],[-106.95,44.8],[-103.23,44.08],[-100.3,43.9],[-96.73,43.55],[-91.2,43.8],[-89.4,43.07],[-87.63,41.88],[-86.2,41.7],[-81.69,41.5],[-79,42.88],[-76.15,43.05],[-73.75,42.65],[-71.06,42.36]]],
+      ['I-94', [[-108.5,45.78],[-106.3,46.4],[-104,46.95],[-100.78,46.81],[-96.79,46.88],[-93.27,44.98],[-89.4,43.07],[-87.91,43.04],[-87.63,41.88],[-86.2,42.1],[-83.05,42.33]]],
+      ['I-95', [[-80.19,25.76],[-80.05,26.7],[-81,29.2],[-81.66,30.33],[-81.1,32.08],[-80.4,33.5],[-78.9,35.05],[-77.44,37.54],[-77.04,38.91],[-76.6,39.29],[-75.17,39.95],[-74.01,40.71],[-72.9,41.3],[-71.4,41.8],[-71.06,42.36],[-70.25,43.66],[-68.8,44.8]]],
+      ['I-20', [[-104.25,31.08],[-103.49,31.42],[-102.08,32.0],[-99.73,32.45],[-97.8,32.76],[-97.33,32.76],[-96.8,32.78],[-95.3,32.35],[-93.75,32.53],[-90.18,32.3],[-86.8,33.52],[-84.39,33.75],[-82,33.47],[-81.03,34],[-79.8,34.2]]],
+      ['I-10', [[-118.24,34.05],[-116.5,33.8],[-114.6,33.6],[-112.07,33.45],[-110.97,32.22],[-110.29,31.97],[-109.83,32.25],[-108.71,32.35],[-107.76,32.27],[-106.76,32.32],[-106.49,31.76],[-104.83,31.04],[-102.88,30.89],[-100.6,30.55],[-98.49,29.42],[-95.37,29.76],[-93.8,30.1],[-93.2,30.2],[-91.15,30.45],[-90.07,29.95],[-88.04,30.69],[-87.2,30.42],[-84.28,30.44],[-81.66,30.33]]],
+      ['I-40', [[-117,34.9],[-114.6,34.8],[-111.65,35.2],[-109.2,35.1],[-106.65,35.08],[-103.7,35.17],[-101.83,35.22],[-99.4,35.4],[-97.52,35.47],[-94.4,35.39],[-92.29,34.75],[-90.05,35.15],[-86.78,36.16],[-83.92,35.96],[-82.55,35.6],[-80.25,36.1],[-78.64,35.78],[-77.9,34.2]]],
+      ['I-35', [[-99.5,27.5],[-98.49,29.42],[-97.74,30.27],[-97.15,31.55],[-97.13,32.0],[-97.33,32.76],[-97.13,33.21],[-97.13,33.63],[-97.52,35.47],[-97.34,37.69],[-96.18,38.4],[-94.58,39.1],[-93.62,41.59],[-93.27,44.98],[-92.1,46.78]]],
       ['I-35E', [[-97.13,32.0],[-96.85,32.39],[-96.8,32.78],[-97.13,33.21]]],
       ['I-45', [[-96.8,32.78],[-96.17,31.72],[-95.37,29.76]]],
       ['I-30', [[-97.33,32.76],[-96.8,32.78],[-95.6,33.13],[-94.04,33.44],[-92.29,34.75]]],
       ['US-287', [[-101.83,35.22],[-100.2,34.43],[-98.49,33.91],[-97.33,32.76],[-97.14,32.56],[-96.85,32.39]]],
-      ['I-25', [[-106.76,32.32],[-107.25,33.13],[-106.65,35.08],[-105.94,35.69],[-104.6,37]]],
+      ['I-25', [[-106.76,32.32],[-107.25,33.13],[-106.65,35.08],[-105.94,35.69],[-104.6,37],[-104.6,38.25],[-104.82,38.83],[-104.99,39.74],[-104.82,41.14],[-106.3,42.85],[-106.7,44.35]]],
       ['I-17', [[-112.07,33.45],[-111.65,35.2]]],
       ['I-44', [[-98.49,33.91],[-98.4,34.6],[-97.52,35.47],[-95.99,36.15],[-94.6,36.9]]],
       ['US-75', [[-96.8,32.78],[-96.61,33.64],[-96.37,33.99],[-95.77,34.93],[-95.37,35.75]]],
@@ -967,15 +1014,17 @@ This is a starting draft. Edit it together.`;
     const { proj, W, H } = v, inside = (x, y, m = 0) => x >= -m && x <= W + m && y >= -m && y <= H + m;
     const span = v.spanLatShown;
     const maxPri = span > 9 ? 1 : span > 4.5 ? 2 : 3;
-    let out = '';
+    let out = `<polygon points="${GEO.usa.map(([lon, lat]) => proj(lat, lon).map(n => n.toFixed(1)).join(',')).join(' ')}" fill="var(--map-land)" stroke="var(--map-border)" stroke-width="1"/>`;
     GEO.states.forEach(([name, ring]) => {
       const pts = ring.map(([lon, lat]) => proj(lat, lon));
       out += `<polygon points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="var(--map-land)" stroke="var(--map-border)" stroke-width="1" stroke-dasharray="4 3"/>`;
     });
+    const wideStates = [];   // zoomed far out: these names wait for the collision check below
     GEO.states.forEach(([name, ring]) => {
       const cx = ring.reduce((t, p) => t + p[0], 0) / ring.length, cy = ring.reduce((t, p) => t + p[1], 0) / ring.length;
       const [x, y] = proj(cy, cx);
-      if (inside(x, y, -20)) out += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="2" fill="var(--map-state)" font-family="var(--font-body)">${name}</text>`;
+      if (inside(x, y, -20) && span <= 9) out += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="11" font-weight="600" letter-spacing="2" fill="var(--map-state)" font-family="var(--font-body)">${name}</text>`;
+      else if (inside(x, y, -20)) wideStates.push([name, cx, cy]);
     });
     const boxes = avoid.map(a => Array.isArray(a) ? { x: a[0] - 12, y: a[1] - 12, w: 24, h: 24 } : a);
     const free = (x, y, w, h) => !boxes.some(b => x < b.x + b.w && x + w > b.x && y < b.y + b.h && y + h > b.y);
@@ -1010,7 +1059,15 @@ This is a starting draft. Edit it together.`;
       hwOut += `<rect x="${(x - w / 2).toFixed(1)}" y="${(y - h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h}" rx="3" fill="var(--surface)" stroke="var(--map-road)"/>
         <text x="${x.toFixed(1)}" y="${(y + 3.5).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="600" fill="var(--muted)" font-family="var(--font-mono)">${name}</text>`;
     });
-    out += hwOut + cityOut;
+    // Names for the rest of the country go last, and only where they don't collide with a town, highway or point.
+    let stOut = '';
+    wideStates.concat(GEO.labels).forEach(([name, lon, lat]) => {
+      const [x, y] = proj(lat, lon), w = name.length * 6.6, h = 11;
+      if (!inside(x, y, -20) || !free(x - w / 2, y - 9, w, h)) return;
+      boxes.push({ x: x - w / 2, y: y - 9, w, h });
+      stOut += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="9.5" font-weight="600" letter-spacing="1.2" fill="var(--map-state)" opacity="0.75" font-family="var(--font-body)">${name}</text>`;
+    });
+    out += stOut + hwOut + cityOut;
     return out;
   }
   // Locator inset: Arizona, New Mexico and Texas in miniature, with a box showing where the main map is.
@@ -1026,13 +1083,17 @@ This is a starting draft. Edit it together.`;
     const count = (c) => marks.filter(([x, y]) => x >= c.box[0] && x <= c.box[2] && y >= c.box[1] && y <= c.box[3]).length;
     return corners.reduce((best, c) => count(c) < count(best) ? c : best, corners[0]);
   }
+  const INSET_US = { s: 24.4, n: 49.5, w0: -125, e: -66.8 };
   function insetMap(v, pos) {
     const X = pos ? pos.x : INSET.x, Y = pos ? pos.y : INSET.y;
-    const kx = Math.cos(31.5 * Math.PI / 180);
-    const sc = Math.min(INSET.w / ((INSET.e - INSET.w0) * kx), INSET.h / (INSET.n - INSET.s));
-    const cx = (INSET.w0 + INSET.e) / 2, cy = (INSET.s + INSET.n) / 2;
+    const c0 = v.inv(v.W / 2, v.H / 2), span = v.spanLatShown;
+    const home = c0.lat > INSET.s && c0.lat < INSET.n && c0.lon > INSET.w0 && c0.lon < INSET.e && span < (INSET.n - INSET.s) * 0.8;
+    const B = home ? INSET : INSET_US;
+    const kx = Math.cos((home ? 31.5 : 38) * Math.PI / 180);
+    const sc = Math.min(INSET.w / ((B.e - B.w0) * kx), INSET.h / (B.n - B.s));
+    const cx = (B.w0 + B.e) / 2, cy = (B.s + B.n) / 2;
     const pr = (lat, lon) => [X + INSET.w / 2 + (lon - cx) * kx * sc, Y + INSET.h / 2 - (lat - cy) * sc];
-    const states = GEO.states.map(([, ring]) => `<polygon points="${ring.map(([lon, lat]) => pr(lat, lon).map(n => n.toFixed(1)).join(',')).join(' ')}" fill="var(--map-land)" stroke="var(--map-border)" stroke-width="0.6"/>`).join('');
+    const states = `<polygon points="${GEO.usa.map(([lon, lat]) => pr(lat, lon).map(n => n.toFixed(1)).join(',')).join(' ')}" fill="var(--map-land)" stroke="var(--map-border)" stroke-width="0.6"/>` + GEO.states.map(([, ring]) => `<polygon points="${ring.map(([lon, lat]) => pr(lat, lon).map(n => n.toFixed(1)).join(',')).join(' ')}" fill="var(--map-land)" stroke="var(--map-border)" stroke-width="0.6"/>`).join('');
     const tl = v.inv(0, 0), br = v.inv(v.W, v.H);
     const [x1, y1] = pr(tl.lat, tl.lon), [x2, y2] = pr(br.lat, br.lon);
     let bx = Math.max(X, x1), by = Math.max(Y, y1), bw = Math.min(X + INSET.w, x2) - bx, bh = Math.min(Y + INSET.h, y2) - by;
@@ -1042,7 +1103,7 @@ This is a starting draft. Edit it together.`;
       <rect x="${X - 1.5}" y="${Y - 1.5}" width="${INSET.w + 3}" height="${INSET.h + 3}" rx="5" fill="var(--surface)" stroke="var(--line)"/>
       <g clip-path="url(#insetClip${Math.round(x1 * 10)}${Math.round(y1 * 10)})"><rect x="${X}" y="${Y}" width="${INSET.w}" height="${INSET.h}" fill="var(--map-water)"/>${states}</g>
       <rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" fill="var(--accent)" fill-opacity="0.18" stroke="var(--accent)" stroke-width="1.6"/>
-      <text x="${X + 4}" y="${Y + INSET.h - 4}" font-size="7.5" font-weight="600" letter-spacing="0.5" fill="var(--muted)" font-family="var(--font-body)">AZ · NM · TX</text>
+      <text x="${X + 4}" y="${Y + INSET.h - 4}" font-size="7.5" font-weight="600" letter-spacing="0.5" fill="var(--muted)" font-family="var(--font-body)">${home ? 'AZ · NM · TX' : 'USA'}</text>
     </g>`;
   }
   function mapFrame(v, inner, label, avoid = [], withInset = false) {
@@ -1627,26 +1688,12 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
       <div class="lock-inner">
         <div class="brand">Rally <span>Book</span></div>
         <p class="muted">Each teammate's plan for when we can't reach each other. Encrypted on this phone, unlocked by your own password.</p>
-        ${!cur && lockMode === 'start' ? `
-          <form data-form="start" class="panel" autocomplete="off">
-            <div class="head-row"><h3>Start a new group</h3><button class="sheet-x" style="position:static" type="button" data-act="lockMode" data-arg="unlock" aria-label="Close">${SVGI('<path d="M6 6l12 12M18 6L6 18"/>')}</button></div>
-            <p class="muted small">Only one person does this: whoever sets the group up. Everyone else taps Join a group and uses a package from you.</p>
-            <div class="field"><label class="label" for="gName">Group name</label><input id="gName" class="input" maxlength="40" required autocomplete="off" placeholder="e.g. North Texas team"></div>
-            <div class="field"><label class="label" for="sName">Your name</label><input id="sName" class="input" maxlength="40" required autocomplete="off"></div>
-            <p class="small muted">Both can be changed later.</p>
-            <div class="field"><label class="label" for="sPass1">Choose a password</label><input id="sPass1" class="input" type="password" minlength="6" required></div>
-            <div class="field"><label class="label" for="sPass2">Type it again</label><input id="sPass2" class="input" type="password" minlength="6" required></div>
-            <p class="small muted">Your password unlocks Rally Book on this phone only and isn't stored anywhere. If you forget it, a teammate can restore you.</p>
-            ${lockErr ? `<p class="err">${esc(lockErr)}</p>` : ''}
-            <button class="btn btn-primary btn-block" type="button" data-act="submitForm">Start the group</button>
-          </form>` : !cur ? `
+        ${!cur ? `
           <div class="panel">
             <h3>Get started</h3>
             ${lockErr ? `<p class="notice notice-bad">${esc(lockErr)}</p>` : ''}
-            <p class="muted small"><strong>Joining your team?</strong> Ask the teammate who runs the group to add you. They'll send a package in Signal and read you a code.</p>
+            <p class="muted small">Ask the person who invited you for a package and a code. They'll send the package in Signal and read you the code in person or on a call.</p>
             <button class="btn btn-primary" type="button" data-act="lockMode" data-arg="restore">Join a group</button>
-            <p class="muted small" style="margin-top:6px"><strong>Setting up the group?</strong> Only one person does this.</p>
-            <button class="btn" type="button" data-act="lockMode" data-arg="start">Start a new group</button>
             ${anyGroup || !SEED.length ? '' : '<button class="linkbtn small" type="button" data-act="setup" style="color:var(--muted)">Or try a practice group with made-up plans</button>'}
           </div>` : cur ? `
           <form data-form="unlock" class="lock-inner" style="gap:12px" autocomplete="off">
@@ -1801,9 +1848,8 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
         </dl>
       </details>`).join('');
     return `
-      ${st.group && st.group.name ? `<p class="meta group-name">${esc(st.group.name)}</p>` : ''}
-      <div class="head-row"><h2>Team OPLANs</h2><button class="fb-mini" type="button" data-act="feedback" data-arg="suggestion|Plans" aria-label="Send feedback about Plans"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button></div>
-      <p class="lede">Each teammate's operating plan: what they'll do, where they'll be and how to reach them if we can't communicate.</p>
+      <div class="hero">${PLANS_ART}${st.group && st.group.name ? `<p class="meta group-name" style="margin:0">${esc(st.group.name)}</p>` : ''}<h2>Plans</h2><button class="fb-mini" type="button" data-act="feedback" data-arg="suggestion|Plans" aria-label="Send feedback about Plans"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+      <p class="lede">Each teammate's operating plan: what they'll do, where they'll be and how to reach them if we can't communicate.</p></div>
       <button class="lc-btn" type="button" data-act="tab" data-arg="lost">
         <span class="lc-ico" aria-hidden="true">${SVGI('<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.01"/>')}</span>
         <span><strong>If we lose contact</strong><small>What to do, how to reach us, where everyone will be</small></span>
@@ -2152,8 +2198,8 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
           ${diff.length ? diff.map(k => `
             <div class="change">
               <span class="label">${esc(COMMS_LABEL[k])}</span>
-              <span class="old">${esc((cur.fields || {})[k]) || '(empty)'}</span>
-              <span class="new comms-text">${esc(nf[k]) || '(empty)'}</span>
+              <span class="old">${k === 'channels' ? (chParse((cur.fields || {})[k]).map(c => esc(chLine(c))).join('<br>') || '(none)') : esc((cur.fields || {})[k]) || '(empty)'}</span>
+              <span class="new comms-text">${k === 'channels' ? (chParse(nf[k]).map(c => esc(chLine(c))).join('<br>') || '(none)') : esc(nf[k]) || '(empty)'}</span>
             </div>`).join('') : '<p class="small muted">Nothing differs from what you already have. Accepting just records the newer version.</p>'}`;
       } else if (pending.type === 'types') {
         preview = `
@@ -2312,7 +2358,32 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
   const curComms = () => st.comms || { rev: 0, fields: emptyComms(), by: null, ts: null, lastChanged: [] };
   const commsDirty = () => !!commsDraft && COMMS_KEYS.some(k => (commsDraft.fields[k] || '').trim() !== (curComms().fields[k] || '').trim());
   const commsChanged = (a, b) => COMMS_KEYS.filter(k => (a[k] || '').trim() !== (b[k] || '').trim());
+  const radioRef = () => `
+    <details class="ch-ref">
+      <summary>Standard frequencies (reference)</summary>
+      <p class="small muted">Built into the app and the same on every phone. Not part of comms updates.</p>
+      <h4>FRS / GMRS (22 shared channels)</h4>
+      <p class="small">FRS needs no license: up to 2 W on channels 1–7 and 15–22, 0.5 W on 8–14. GMRS needs an FCC license ($35, 10 years, no test) and allows more power: up to 5 W on 1–7, 0.5 W on 8–14, up to 50 W on 15–22. GMRS repeaters listen 5 MHz higher (467.xxx) on channels 15–22.</p>
+      <div class="ch-grid">${FRS_GMRS.map(([n, f]) => `<span><strong>${n}</strong> ${f}</span>`).join('')}</div>
+      <h4>NOAA weather (listen only)</h4>
+      <div class="ch-grid">${['162.400', '162.425', '162.450', '162.475', '162.500', '162.525', '162.550'].map((f, i) => `<span><strong>WX${i + 1}</strong> ${f}</span>`).join('')}</div>
+      <h4>MURS (no license, up to 2 W)</h4>
+      <div class="ch-grid">${['151.820', '151.880', '151.940', '154.570', '154.600'].map((f, i) => `<span><strong>M${i + 1}</strong> ${f}</span>`).join('')}</div>
+      <p class="small muted">M1–M3 are narrow FM; M4–M5 allow wide FM.</p>
+      <h4>Ham national calling (license required to transmit)</h4>
+      <div class="ch-grid"><span><strong>2 m</strong> 146.520</span><span><strong>70 cm</strong> 446.000</span></div>
+      <p class="small muted">Frequencies in MHz. Check your radio's manual for what it's certified to transmit on.</p>
+    </details>
+    <div class="ch-soon"><span class="chip">Coming soon</span><span><strong>CHIRP support.</strong> Copy this channel list straight into CHIRP, the free program for programming Baofengs from a computer, so every radio gets the same channels.</span></div>`;
+  const chView = (list) => list.length ? `<div class="ch-list">${list.map(c => `
+      <div class="ch-row">
+        <span class="ch-num">${esc(c.ch || '–')}</span>
+        <div><strong>${esc(c.name || 'Unnamed channel')}</strong>${c.type ? ` <span class="chip">${esc(chType(c.type))}</span>` : ''}
+          <div class="ch-meta">${esc([c.freq && `${c.freq} MHz`, c.offset && `offset ${c.offset}`, c.tone && `tone ${c.tone}`].filter(Boolean).join(' · ') || 'No frequency yet')}</div>
+          ${c.note ? `<div class="small muted">${esc(c.note)}</div>` : ''}</div>
+      </div>`).join('')}</div>` : '<span class="muted">No team channels yet</span>';
   const textOr = (v) => (v || '').trim() ? `<div class="comms-text">${esc(v.trim())}</div>` : '<span class="muted">Not filled in yet</span>';
+  const PLANS_ART = `<svg class="hero-art" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"> <defs> <linearGradient id="pbWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26313a"/><stop offset="1" stop-color="#161d24"/></linearGradient> <linearGradient id="pbCork" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b48a58"/><stop offset="1" stop-color="#8a6438"/></linearGradient> <pattern id="pbSpeck" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="4" cy="5" r="1.4" fill="#6e4d28" opacity=".55"/><circle cx="13" cy="12" r="1.1" fill="#d2ab78" opacity=".5"/><circle cx="9" cy="16" r=".9" fill="#5e4020" opacity=".5"/></pattern> <linearGradient id="pbMap" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4eed9"/><stop offset="1" stop-color="#ddd3b4"/></linearGradient> <linearGradient id="pbWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a30"/><stop offset="1" stop-color="#3a2412"/></linearGradient> <radialGradient id="pbLamp" cx=".5" cy="0" r=".85"><stop offset="0" stop-color="#ffd59a" stop-opacity=".42"/><stop offset="1" stop-color="#ffd59a" stop-opacity="0"/></radialGradient> <filter id="pbShadow" x="-10%" y="-10%" width="130%" height="130%"><feDropShadow dx="3" dy="5" stdDeviation="4" flood-color="#000" flood-opacity=".45"/></filter> </defs> <rect width="1200" height="400" fill="url(#pbWall)"/> <rect x="140" y="14" width="920" height="262" rx="6" fill="#4a2f17"/> <rect x="154" y="28" width="892" height="234" fill="url(#pbCork)"/> <rect x="154" y="28" width="892" height="234" fill="url(#pbSpeck)"/> <g filter="url(#pbShadow)" transform="rotate(-1.5 610 140)"> <rect x="420" y="44" width="380" height="196" fill="url(#pbMap)"/> <g fill="none" stroke="#b7a679" stroke-width="2" opacity=".8"> <path d="M440 200c40-30 90-36 130-20s80 10 110-14 70-20 100-6"/> <path d="M450 172c36-24 80-30 118-16s76 6 104-16 64-18 104-4"/> <path d="M520 120c22-22 60-24 80-6s10 46-22 50-74-20-58-44z"/> <path d="M540 122c14-12 38-12 50 0s4 28-16 30-46-14-34-30z"/> </g> <path d="M430 96c60 10 90 40 140 36s90-40 150-30 70 30 80 26" fill="none" stroke="#5c9bd1" stroke-width="5" stroke-linecap="round"/> <g fill="none" stroke="#8c8577" stroke-width="3.5" stroke-linecap="round"><path d="M430 150H800"/><path d="M640 44L600 240"/><path d="M700 44c-10 60 30 110 80 196"/></g> <path d="M470 210L560 150L650 170L740 90" fill="none" stroke="#e05a24" stroke-width="4" stroke-dasharray="10 8" stroke-linecap="round"/> <path d="M500 70L600 112L690 196" fill="none" stroke="#2f8f5b" stroke-width="4" stroke-dasharray="10 8" stroke-linecap="round"/> </g> <g filter="url(#pbShadow)"> <g transform="rotate(-5 290 100)"><rect x="214" y="48" width="168" height="104" rx="3" fill="#fbfaf5"/><rect x="214" y="48" width="168" height="18" rx="3" fill="#e05a24"/><g stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"><path d="M230 86h120"/><path d="M230 104h96"/><path d="M230 122h110"/><path d="M230 140h70"/></g></g> <g transform="rotate(4 300 210)"><rect x="226" y="160" width="160" height="92" rx="3" fill="#fbfaf5"/><rect x="226" y="160" width="160" height="18" rx="3" fill="#2f8f5b"/><g stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"><path d="M242 196h112"/><path d="M242 214h88"/><path d="M242 232h100"/></g></g> <g transform="rotate(5 910 100)"><rect x="826" y="50" width="168" height="104" rx="3" fill="#fbfaf5"/><rect x="826" y="50" width="168" height="18" rx="3" fill="#3f7fc9"/><g stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"><path d="M842 88h120"/><path d="M842 106h100"/><path d="M842 124h112"/><path d="M842 142h64"/></g></g> <g transform="rotate(-4 900 212)"><rect x="820" y="164" width="160" height="90" rx="3" fill="#fbfaf5"/><rect x="820" y="164" width="160" height="18" rx="3" fill="#d9a21b"/><g stroke="#9aa3ab" stroke-width="3" stroke-linecap="round"><path d="M836 200h112"/><path d="M836 218h90"/><path d="M836 236h104"/></g></g> </g> <g stroke="#c8322a" stroke-width="2.2" fill="none" opacity=".9"><path d="M372 70L498 70"/><path d="M380 186L470 208"/><path d="M836 70L740 92"/><path d="M830 190L690 194"/></g> <g> <circle cx="300" cy="56" r="8" fill="#e05a24"/><circle cx="306" cy="168" r="8" fill="#2f8f5b"/><circle cx="910" cy="58" r="8" fill="#3f7fc9"/><circle cx="900" cy="172" r="8" fill="#d9a21b"/> <circle cx="498" cy="70" r="10" fill="#2f8f5b" stroke="#fff" stroke-width="2"/><circle cx="470" cy="208" r="10" fill="#e05a24" stroke="#fff" stroke-width="2"/> <circle cx="740" cy="92" r="10" fill="#3f7fc9" stroke="#fff" stroke-width="2"/><circle cx="690" cy="194" r="10" fill="#d9a21b" stroke="#fff" stroke-width="2"/> <circle cx="600" cy="140" r="12" fill="#c8322a" stroke="#fff" stroke-width="3"/> </g> <path d="M0 300H1200V400H0Z" fill="url(#pbWood)"/> <path d="M0 300H1200" stroke="#b07a45" stroke-width="5"/> <g transform="translate(330 330)"><circle r="30" fill="#c9a35a"/><circle r="24" fill="#f4eed9"/><path d="M0-20L6 0L0 20L-6 0Z" fill="#c8322a"/><path d="M0 0L6 0L0 20L-6 0Z" fill="#5a6672"/></g> <g transform="translate(790 322) rotate(-8)"><rect width="150" height="26" rx="10" fill="#2c353d" stroke="#56626d" stroke-width="2"/><rect x="138" y="-4" width="30" height="34" rx="6" fill="#39434c"/><circle cx="60" cy="13" r="5" fill="#e05a24"/></g> <rect width="1200" height="400" fill="url(#pbLamp)"/> </svg>`;
   const PLAN_ART = `<svg class="hero-art" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mpDesk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a3220"/><stop offset="1" stop-color="#1f140b"/></linearGradient><linearGradient id="mpPaper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6f1e4"/><stop offset="1" stop-color="#d9d1bd"/></linearGradient><radialGradient id="mpLamp" cx=".45" cy=".1" r=".9"><stop offset="0" stop-color="#ffd59a" stop-opacity=".35"/><stop offset="1" stop-color="#ffd59a" stop-opacity="0"/></radialGradient><radialGradient id="mpVig" cx=".5" cy=".45" r=".75"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".75"/></radialGradient></defs><rect width="1200" height="400" fill="url(#mpDesk)"/><g stroke="#120b05" stroke-width="2" opacity=".5" fill="none"><path d="M0 60c200-10 420 12 640 0s400-8 560 6"/><path d="M0 150c260-14 500 10 760-2s300-6 440 4"/><path d="M0 250c180-8 380 10 620 0s420-10 580 2"/><path d="M0 340c240-10 460 8 700-2s340-6 500 6"/></g><g transform="translate(70 70) rotate(-9)" opacity=".9">  <rect width="250" height="190" rx="4" fill="#c9bf9f"/>  <path d="M0 0L250 0L250 190L0 190Z" fill="none" stroke="#8e8263" stroke-width="2"/>  <g stroke="#7a6f52" stroke-width="2" fill="none" opacity=".7"><path d="M20 40c40 10 70-20 110 0s70 30 110 10"/><path d="M30 120c50-20 90 10 130-10s50-20 80 0"/><path d="M83 0v190M166 0v190M0 63h250M0 126h250"/></g>  <circle cx="150" cy="70" r="7" fill="#c2410c"/></g><g transform="translate(430 30) rotate(4)">  <rect x="8" y="10" width="360" height="400" rx="6" fill="#000" opacity=".35"/>  <rect width="360" height="400" rx="6" fill="url(#mpPaper)"/>  <g fill="#3a3a3a"><circle cx="40" cy="18" r="6"/><circle cx="100" cy="18" r="6"/><circle cx="160" cy="18" r="6"/><circle cx="220" cy="18" r="6"/><circle cx="280" cy="18" r="6"/></g>  <path d="M60 0V400" stroke="#d98c8c" stroke-width="2"/>  <g stroke="#b9c6d6" stroke-width="1.5"><path d="M0 70H360M0 104H360M0 138H360M0 172H360M0 206H360M0 240H360M0 274H360M0 308H360M0 342H360"/></g>  <g fill="none" stroke="#24324a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">    <path d="M78 58c6-10 14-12 18-2s10 8 16-2 12-6 18 2 14 4 20-4"/>    <path d="M78 94l6 6 10-14"/><path d="M104 94c10-6 20 4 30-2s20 6 32 0 22 4 34-2 20 4 30 0"/>    <path d="M78 128l6 6 10-14"/><path d="M104 128c12-4 22 6 34 0s18 4 30-2 24 6 36 0"/>    <rect x="78" y="150" width="14" height="14" rx="2"/><path d="M104 160c10-6 22 4 32-2s20 6 30 0 20 2 28-2"/>    <rect x="78" y="184" width="14" height="14" rx="2"/><path d="M104 194c14-4 24 6 36 0s22 4 34-2"/>    <path d="M78 230c10-4 18 6 28 0s20 4 30-2 18 4 26 0 22 6 34 0 16 2 26-2"/>    <path d="M78 264c12-6 22 4 34-2s18 6 30 0"/>  </g>  <path d="M250 214c-30 8-40 30-10 44" fill="none" stroke="#c2410c" stroke-width="3" stroke-linecap="round"/></g><g transform="translate(860 40) rotate(28)">  <rect x="6" y="8" width="26" height="300" rx="13" fill="#000" opacity=".35"/>  <rect width="26" height="300" rx="13" fill="#1d2a3a"/>  <rect x="0" y="40" width="26" height="70" fill="#2b3d52"/>  <rect x="9" y="-8" width="8" height="70" rx="3" fill="#b8c0c8"/>  <path d="M0 300L13 340L26 300Z" fill="#d6c7a8"/><path d="M9 328L13 340L17 328Z" fill="#24324a"/></g><g transform="translate(1010 230)">  <ellipse cx="6" cy="10" rx="74" ry="74" fill="#000" opacity=".3"/>  <circle r="72" fill="#2a2f35"/><circle r="58" fill="#120c07"/><circle r="58" fill="none" stroke="#3a2a1a" stroke-width="3"/>  <path d="M60 -20c40 -10 50 40 6 46" fill="none" stroke="#2a2f35" stroke-width="16"/></g><g transform="translate(150 300) rotate(-14)"><rect width="150" height="80" rx="8" fill="#13181d"/><rect x="8" y="8" width="134" height="64" rx="5" fill="#1b2229"/></g><rect width="1200" height="400" fill="url(#mpLamp)"/><rect width="1200" height="400" fill="url(#mpVig)"/></svg>`;
   const IMPORT_ART = `<svg class="hero-art" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="imBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14202a"/><stop offset="1" stop-color="#0a1016"/></linearGradient><pattern id="imGrid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#1f2e3a" stroke-width="1"/></pattern><linearGradient id="imScreen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2836"/><stop offset="1" stop-color="#121b24"/></linearGradient><radialGradient id="imGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff7a33" stop-opacity=".45"/><stop offset="1" stop-color="#ff7a33" stop-opacity="0"/></radialGradient><radialGradient id="imVig" cx=".5" cy=".45" r=".75"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".7"/></radialGradient></defs><rect width="1200" height="400" fill="url(#imBg)"/><rect width="1200" height="400" fill="url(#imGrid)"/><g font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#2c4152">  <text x="20" y="40">RALLY2.3.k9Qx7vLmP2aZt0eRw4uYb8nHs1cJ</text><text x="640" y="70">qF3e9KcW0pLx2RALLY2.3.Zm8sT1vNa4yG</text>  <text x="300" y="380">Ux2Lp9wQe7RALLY2.3.b0cH5nJm3kXa8tV</text><text x="860" y="360">RALLY2.3.yT6rE2wQ9pL1mN4bV7cX0zA</text></g><g transform="translate(150 70) rotate(-6)">  <rect width="190" height="360" rx="30" fill="#0b0f13" stroke="#3a4652" stroke-width="3"/>  <rect x="12" y="14" width="166" height="332" rx="22" fill="url(#imScreen)"/>  <rect x="70" y="22" width="50" height="10" rx="5" fill="#0b0f13"/>  <rect x="26" y="60" width="120" height="44" rx="14" fill="#2a3a4a"/><rect x="38" y="74" width="80" height="6" rx="3" fill="#6f8aa3"/><rect x="38" y="86" width="56" height="6" rx="3" fill="#6f8aa3"/>  <rect x="44" y="120" width="120" height="70" rx="14" fill="#c2410c"/><g fill="#ffd9c2"><rect x="56" y="134" width="92" height="5" rx="2"/><rect x="56" y="146" width="80" height="5" rx="2"/><rect x="56" y="158" width="90" height="5" rx="2"/><rect x="56" y="170" width="50" height="5" rx="2"/></g>  </g><g transform="translate(860 60) rotate(5)">  <rect width="190" height="360" rx="30" fill="#0b0f13" stroke="#3a4652" stroke-width="3"/>  <rect x="12" y="14" width="166" height="332" rx="22" fill="url(#imScreen)"/>  <rect x="70" y="22" width="50" height="10" rx="5" fill="#0b0f13"/>  <rect x="26" y="70" width="138" height="84" rx="12" fill="#1f2c39" stroke="#3a4f63" stroke-width="2"/><g fill="#4f6a84"><rect x="38" y="84" width="110" height="5" rx="2"/><rect x="38" y="96" width="100" height="5" rx="2"/><rect x="38" y="108" width="112" height="5" rx="2"/><rect x="38" y="120" width="70" height="5" rx="2"/></g>  <rect x="26" y="170" width="138" height="34" rx="10" fill="#c2410c"/><rect x="62" y="183" width="66" height="8" rx="4" fill="#ffd9c2"/>  <rect x="26" y="220" width="138" height="34" rx="10" fill="none" stroke="#3a4f63" stroke-width="2"/>  <path d="M80 236l10 10 20-22" stroke="#5fd38d" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g><path d="M360 190C480 60 720 60 840 170" fill="none" stroke="#ff7a33" stroke-width="3" stroke-dasharray="10 12" stroke-linecap="round" opacity=".85"/><path d="M828 150l18 22-28 4" fill="none" stroke="#ff7a33" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/><g fill="#ff7a33"><rect x="430" y="112" width="16" height="16" rx="3" transform="rotate(-20 438 120)"/><rect x="520" y="86" width="16" height="16" rx="3" transform="rotate(-8 528 94)"/><rect x="690" y="88" width="16" height="16" rx="3" transform="rotate(12 698 96)"/><rect x="770" y="118" width="16" height="16" rx="3" transform="rotate(24 778 126)"/></g><circle cx="604" cy="84" r="80" fill="url(#imGlow)"/><g transform="translate(604 84)">  <circle r="34" fill="#0b0f13" stroke="#ff7a33" stroke-width="3"/>  <rect x="-13" y="-4" width="26" height="20" rx="4" fill="#ff7a33"/>  <path d="M-8 -4v-6a8 8 0 0 1 16 0v6" fill="none" stroke="#ff7a33" stroke-width="4"/></g><rect width="1200" height="400" fill="url(#imVig)"/></svg>`;
   const COMMS_ART = `<svg class="hero-art" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="caWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a3640"/><stop offset="1" stop-color="#18212a"/></linearGradient><pattern id="caPeg" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="13" cy="13" r="2.4" fill="#111820"/></pattern><linearGradient id="caWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a30"/><stop offset="1" stop-color="#3a2412"/></linearGradient><linearGradient id="caDish" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#dfe4e8"/><stop offset="1" stop-color="#a9b2ba"/></linearGradient><linearGradient id="caBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a444d"/><stop offset="1" stop-color="#20272e"/></linearGradient><radialGradient id="caLamp" cx=".6" cy="0" r=".8"><stop offset="0" stop-color="#ffd59a" stop-opacity=".45"/><stop offset="1" stop-color="#ffd59a" stop-opacity="0"/></radialGradient><radialGradient id="caGreen" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#5fd38d" stop-opacity=".55"/><stop offset="1" stop-color="#5fd38d" stop-opacity="0"/></radialGradient><radialGradient id="caAmber" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient><radialGradient id="caSky" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#9fd3ff" stop-opacity=".45"/><stop offset="1" stop-color="#9fd3ff" stop-opacity="0"/></radialGradient></defs><rect width="1200" height="400" fill="url(#caWall)"/><rect width="1200" height="215" fill="url(#caPeg)"/><!-- hanging headset and coiled cable on the pegboard --><g fill="none" stroke-linecap="round">  <path d="M960 18v22" stroke="#56626d" stroke-width="5"/>  <path d="M928 74a32 32 0 0 1 64 0" stroke="#11171d" stroke-width="9"/>  <rect x="916" y="70" width="22" height="34" rx="9" fill="#2c353d" stroke="#56626d" stroke-width="2"/>  <rect x="982" y="70" width="22" height="34" rx="9" fill="#2c353d" stroke="#56626d" stroke-width="2"/>  <path d="M240 16v20" stroke="#56626d" stroke-width="5"/>  <g stroke="#0d1216" stroke-width="6"><ellipse cx="240" cy="52" rx="26" ry="10"/><ellipse cx="240" cy="62" rx="26" ry="10"/><ellipse cx="240" cy="72" rx="26" ry="10"/></g></g><!-- bench --><path d="M0 205H1200V400H0Z" fill="url(#caWood)"/><path d="M0 205H1200" stroke="#b07a45" stroke-width="5"/><g stroke="#2a1909" stroke-width="2" opacity=".5"><path d="M220 207L60 400"/><path d="M520 207L470 400"/><path d="M820 207L880 400"/></g><!-- two handheld radios, standing tall, screens glowing --><circle cx="345" cy="98" r="70" fill="url(#caGreen)"/><g transform="translate(300 45) rotate(-6)">  <rect x="20" y="-62" width="11" height="70" rx="5" fill="#1a2026"/>  <rect x="0" y="0" width="84" height="175" rx="13" fill="url(#caBody)" stroke="#5a6672" stroke-width="2"/>  <rect x="10" y="14" width="64" height="36" rx="5" fill="#174a2c"/><rect x="15" y="20" width="44" height="7" rx="3" fill="#7af0a8"/><rect x="15" y="32" width="28" height="6" rx="3" fill="#7af0a8" opacity=".7"/>  <g fill="#566270"><rect x="12" y="62" width="16" height="11" rx="2"/><rect x="34" y="62" width="16" height="11" rx="2"/><rect x="56" y="62" width="16" height="11" rx="2"/><rect x="12" y="79" width="16" height="11" rx="2"/><rect x="34" y="79" width="16" height="11" rx="2"/><rect x="56" y="79" width="16" height="11" rx="2"/></g>  <circle cx="64" cy="-6" r="8" fill="#e04e2b"/></g><circle cx="455" cy="112" r="62" fill="url(#caAmber)"/><g transform="translate(418 72) rotate(5)">  <rect x="54" y="-50" width="10" height="56" rx="5" fill="#1a2026"/>  <rect x="0" y="0" width="74" height="148" rx="12" fill="url(#caBody)" stroke="#5a6672" stroke-width="2"/>  <rect x="9" y="13" width="56" height="30" rx="5" fill="#4d3410"/><rect x="14" y="19" width="34" height="7" rx="3" fill="#ffc266"/>  <g fill="#566270"><rect x="10" y="54" width="14" height="10" rx="2"/><rect x="30" y="54" width="14" height="10" rx="2"/><rect x="50" y="54" width="14" height="10" rx="2"/></g>  <circle cx="37" cy="106" r="15" fill="#151a1f"/></g><!-- base radio with a bright display --><circle cx="640" cy="150" r="90" fill="url(#caAmber)" opacity=".7"/><g transform="translate(540 118)">  <path d="M0 22L16 0H214L230 22Z" fill="#3a444d"/>  <rect x="0" y="22" width="230" height="74" rx="6" fill="#232a31" stroke="#5a6672" stroke-width="2"/>  <rect x="14" y="36" width="104" height="34" rx="4" fill="#4d3410"/><rect x="20" y="43" width="70" height="9" rx="3" fill="#ffc266"/><rect x="20" y="57" width="44" height="7" rx="3" fill="#ffc266" opacity=".7"/>  <circle cx="150" cy="58" r="17" fill="#39434c" stroke="#6b7883" stroke-width="2"/><circle cx="150" cy="58" r="5" fill="#151a1f"/>  <circle cx="198" cy="58" r="12" fill="#39434c" stroke="#6b7883" stroke-width="2"/>  <circle cx="22" cy="84" r="3.5" fill="#5fd38d"/><circle cx="34" cy="84" r="3.5" fill="#e04e2b"/></g><!-- Starlink dish, big and bright, upper right --><circle cx="925" cy="120" r="150" fill="url(#caSky)"/><path d="M942 196l14 52" stroke="#c8d0d7" stroke-width="12" stroke-linecap="round"/><ellipse cx="958" cy="252" rx="46" ry="10" fill="#141a1f"/><path d="M800 34L1050 14L1078 186L828 210Z" fill="url(#caDish)"/><path d="M828 210L1078 186L1080 198L830 222Z" fill="#8c969f"/><path d="M800 34L1050 14L1078 186L828 210Z" fill="none" stroke="#ffffff" stroke-width="2.5"/><path d="M840 64L1036 48" stroke="#ffffff" stroke-opacity=".6" stroke-width="2"/><!-- router with LED, and the cable to the dish --><g transform="translate(724 168)">  <path d="M0 14L10 0H62L70 14Z" fill="#e6eaed"/><rect x="0" y="14" width="70" height="46" rx="6" fill="#f6f8f9"/><circle cx="35" cy="36" r="4" fill="#5fd38d"/></g><path d="M794 210c40 6 70 -6 110 -6s50 18 62 40" stroke="#0d1216" stroke-width="7" fill="none" stroke-linecap="round"/><!-- warm lamp light --><rect width="1200" height="400" fill="url(#caLamp)"/></svg>`;
@@ -2346,12 +2417,39 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
             <div class="field"><label class="label" for="cm-${k}">${esc(name)}</label>
               <textarea class="area" id="cm-${k}" data-comms="${k}" rows="2" placeholder="${esc(ph)}">${esc(d[k])}</textarea></div>`).join('')}
         </div>
-        ${COMMS_SECTIONS.map(([k, name, help]) => `
+        ${COMMS_SECTIONS.map(([k, name, help]) => k === 'radio' ? `
+          <div class="panel">
+            <h3>Radios</h3>
+            <span class="label">Team channels (up to ${CH_MAX})</span>
+            <p class="small muted">One box per detail, one channel at a time. Frequencies in MHz, e.g. 462.5625.</p>
+            ${(commsDraft.channels || []).map((c, i) => `
+              <fieldset class="ch-edit"><legend class="label">Channel ${i + 1}</legend>
+                <div class="ch-edit-row">
+                  <input class="input" id="ch-${i}-ch" data-ch="${i}" data-k="ch" value="${esc(c.ch)}" placeholder="Ch #" aria-label="Channel number" maxlength="6" inputmode="numeric" autocomplete="off">
+                  <input class="input" id="ch-${i}-name" data-ch="${i}" data-k="name" value="${esc(c.name)}" placeholder="Name, e.g. Team primary" aria-label="Channel name" maxlength="30" autocomplete="off">
+                </div>
+                <div class="ch-edit-row ch-even">
+                  <input class="input" id="ch-${i}-freq" data-ch="${i}" data-k="freq" value="${esc(c.freq)}" placeholder="Frequency (MHz)" aria-label="Frequency in MHz" inputmode="decimal" maxlength="10" autocomplete="off">
+                  <select class="select" id="ch-${i}-type" data-ch="${i}" data-k="type" aria-label="Type"><option value="">Type…</option>${CH_TYPES.map(([v, l]) => `<option value="${v}" ${c.type === v ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                </div>
+                <div class="ch-edit-row ch-even">
+                  <input class="input" id="ch-${i}-offset" data-ch="${i}" data-k="offset" value="${esc(c.offset)}" placeholder="Offset, e.g. +5.000" aria-label="Transmit offset" maxlength="10" autocomplete="off">
+                  <input class="input" id="ch-${i}-tone" data-ch="${i}" data-k="tone" value="${esc(c.tone)}" placeholder="Tone, e.g. 141.3 or D023" aria-label="Privacy tone" maxlength="10" autocomplete="off">
+                </div>
+                <input class="input" id="ch-${i}-note" data-ch="${i}" data-k="note" value="${esc(c.note)}" placeholder="Note, e.g. low power only" aria-label="Note" maxlength="60" autocomplete="off">
+                <div class="row"><button class="btn btn-small btn-quiet" type="button" data-act="chDel" data-arg="${i}">Remove this channel</button></div>
+              </fieldset>`).join('')}
+            ${(commsDraft.channels || []).length < CH_MAX ? '<button class="btn btn-small" type="button" data-act="chAdd">Add a channel</button>' : `<p class="small muted">That's the limit of ${CH_MAX} channels for now.</p>`}
+            <div class="field" style="margin-top:12px"><label class="label" for="cm-radio">Radio notes</label>
+              <span class="small muted">${esc(help)}</span>
+              <textarea class="area" id="cm-radio" data-comms="radio" rows="3">${esc(d.radio)}</textarea>
+              <p class="hint">${esc(RADIO_NOTE)}</p></div>
+          </div>` : `
           <div class="panel">
             <div class="field"><label class="label" for="cm-${k}">${esc(name)}</label>
               ${help ? `<span class="small muted">${esc(help)}</span>` : ''}
               <textarea class="area" id="cm-${k}" data-comms="${k}" rows="4">${esc(d[k])}</textarea>
-              ${k === 'radio' ? `<p class="hint">${esc(RADIO_NOTE)}</p>` : ''}</div>
+</div>
           </div>`).join('')}
         <div class="row">
           <button class="btn" type="button" data-act="commsCancel">Cancel</button>
@@ -2365,7 +2463,7 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
         <p class="lede">How we reach each other, in order. If one way fails, go to the next.</p>
       </div>
       ${removedBanner()}
-      <p class="meta">${c.rev ? `Version ${c.rev}${who ? ` · last edited by ${esc(who)}` : ''}${c.ts ? ` · ${esc(fmt(c.ts))}` : ''}` : 'Starter version on this phone. Not shared yet.'}</p>
+      <p class="meta">${c.rev ? `Version ${c.rev}${who ? ` · last edited by ${esc(who)}` : ''}${c.ts ? ` · ${esc(fmt(c.ts))}` : ''}` : '<strong>Starter version.</strong> Same on every phone until someone edits and shares it.'}</p>
       ${lastOutput && lastOutput.tab === 'comms' ? outputBlock() : ''}
       ${commsDraft && commsDirty() ? `<p class="notice notice-info">You have unsaved comms edits. <button class="linkbtn" type="button" data-act="commsEdit">Keep editing</button></p>` : ''}
       <div class="panel comms-panel">
@@ -2380,11 +2478,19 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
         <div class="head-row"><h3>Check-in schedule</h3></div>
         ${schedBlock(f, upd)}
       </div>
-      ${COMMS_SECTIONS.map(([k, name]) => `
+      ${COMMS_SECTIONS.map(([k, name]) => k === 'radio' ? `
+        <div class="panel comms-panel">
+          <div class="head-row"><h3>${esc(name)}</h3>${upd('radio') || upd('channels')}</div>
+          <span class="label">Team channels</span>
+          ${chView(chParse(f.channels))}
+          <span class="label" style="margin-top:6px">Radio notes</span>
+          ${textOr(f[k])}
+          <p class="small muted">${esc(RADIO_NOTE)}</p>
+          ${radioRef()}
+        </div>` : `
         <div class="panel comms-panel">
           <div class="head-row"><h3>${esc(name)}</h3>${upd(k)}</div>
           ${textOr(f[k])}
-          ${k === 'radio' ? `<p class="small muted">${esc(RADIO_NOTE)}</p>` : ''}
         </div>`).join('')}
       ${st.removedSelf ? '' : `${lastOutput && lastOutput.tab === 'comms' && lastOutput.shareId ? '' : `<div class="row"><button class="btn btn-primary" type="button" data-act="commsEdit">${commsDraft && commsDirty() ? 'Keep editing' : 'Edit comms plan'}</button></div>`}
       ${rule}`}`;
@@ -2820,7 +2926,7 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
 
   const actions = {
     slot: (arg) => { lockToolsOpen = true; slot = arg; lockErr = ''; confirmErase = false; lockMode = slotRead(arg) ? lockMode : lockMode; showLock(); },
-    lockMode: (arg) => { lockMode = arg; lockErr = ''; showLock(); },
+    lockMode: (arg) => { lockMode = arg === 'start' ? 'unlock' : arg; lockErr = ''; showLock(); },
     setup: (arg, btn) => { if (!SEED.length) return; busy(btn, async () => { btn.textContent = 'Setting up…'; await setupDemo(); slot = 'p1'; showLock(); toast(`Practice group ready. Password: ${SEED[0].id}-pass`); }); },
     eraseAll: () => ask({ title: 'Erase all practice phones?', body: 'This deletes all four practice phones on this device so you can start over.', ok: 'Erase all', danger: true },
       () => { SLOTS.forEach(slotClear); outbox = null; outboxRestore = null; slot = 'p1'; lockToolsOpen = false; showLock(); toast('All practice phones erased.'); }),
@@ -3033,8 +3139,18 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
       if (dirty) ask({ title: 'Discard your intent edits?', body: "Your changes haven't been sent. Discarding them can't be undone.", ok: 'Discard edits', danger: true }, go); else go();
     },
     commsEdit: () => {
-      if (!commsDraft) commsDraft = { fields: { ...emptyComms(), ...(curComms().fields || {}) } };
+      if (!commsDraft) { commsDraft = { fields: { ...emptyComms(), ...(curComms().fields || {}) } }; commsDraft.channels = chParse(commsDraft.fields.channels); }
       commsEditing = true; lastOutput = null; render().then(() => setY(0));
+    },
+    chAdd: () => {
+      if (!commsDraft || commsDraft.channels.length >= CH_MAX) return;
+      commsDraft.channels.push(Object.fromEntries(CH_FIELDS.map(k => [k, ''])));
+      render().then(() => $(`#ch-${commsDraft.channels.length - 1}-ch`)?.focus());
+    },
+    chDel: (arg) => {
+      const c = commsDraft.channels[+arg];
+      ask({ title: `Remove ${c.name || (c.ch ? 'channel ' + c.ch : 'this channel')}?`, body: 'Nothing is sent until you save and share the comms update.', ok: 'Remove channel', danger: true },
+        () => { commsDraft.channels.splice(+arg, 1); commsDraft.fields.channels = chText(commsDraft.channels); render(); });
     },
     commsCancel: () => {
       const go = () => { commsEditing = false; commsDraft = null; render().then(() => setY(0)); };
@@ -3042,6 +3158,9 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
     },
     commsSave: (arg, btn) => busy(btn, async () => {
       const cur = curComms();
+      const bad = chClean(commsDraft.channels).find(c => c.freq && !(/^\d{1,4}(\.\d{1,5})?$/.test(c.freq) && +c.freq >= 1 && +c.freq <= 1300));
+      if (bad) { toast(`Check the frequency for ${bad.name || 'channel ' + (bad.ch || '')}: use MHz, like 462.5625.`, 4000); return; }
+      commsDraft.fields.channels = chText(commsDraft.channels);
       const nf = Object.fromEntries(COMMS_KEYS.map(k => [k, (commsDraft.fields[k] || '').trim()]));
       const diff = commsChanged(nf, cur.fields || {});
       if (!diff.length) { toast('No changes to send.'); return; }
@@ -3361,6 +3480,7 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
       return;
     }
     if (t.dataset.comms !== undefined && commsDraft) { commsDraft.fields[t.dataset.comms] = t.value; return; }
+    if (t.dataset.ch !== undefined && commsDraft) { commsDraft.channels[+t.dataset.ch][t.dataset.k] = t.value; commsDraft.fields.channels = chText(commsDraft.channels); return; }
     if (t.id === 'intentText') { intentDraftText = t.value; return; }
     if (!draft || !t.closest('[data-form="mine"]')) return;
     if (t.dataset.c !== undefined) { draft.contacts[+t.dataset.c][t.dataset.k] = t.value; syncMineButtons(); return; }
