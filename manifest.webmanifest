@@ -1,6 +1,6 @@
 {
-  "name": "Rally Book",
-  "short_name": "Rally Book",
+  "name": "RB Staging",
+  "short_name": "RB Staging",
   "description": "Each household's plan for when we can't reach each other. Encrypted and offline.",
   "start_url": "./",
   "scope": "./",
