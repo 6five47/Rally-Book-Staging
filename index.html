@@ -228,6 +228,7 @@ details.route[open] > summary .rcaret { transform: rotate(90deg); }
 details.route > summary .rmeta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
 details.route > .route-body { display: grid; gap: 10px; padding: 0 12px 12px; }
 .carousel { display: grid; gap: 8px; min-width: 0; }
+.upd-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 15px; }
 .om-area { display: grid; gap: 4px; justify-items: start; }
 .om-area[hidden] { display: none; }
 .car-head { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; gap: 8px; }
@@ -637,7 +638,7 @@ header.top { box-shadow: inset 0 -5px 0 #F5C400; }
   const poiBadge = (type, cls = '') => { const ti = typeInfo(type); return `<span class="poi-num ${cls}" style="background:${ti.color}" aria-hidden="true">${iconSvg(ti.icon, 15)}</span>`; };
   // Same symbol inside an SVG map at (x, y), sized to fit a marker of radius r.
   const mapIcon = (type, x, y, r) => { const s = (r * 1.25) / 24; return `<path d="${iconPath(typeInfo(type).icon)}" transform="translate(${(x - 12 * s).toFixed(1)} ${(y - 12 * s).toFixed(1)}) scale(${s.toFixed(3)})" fill="none" stroke="#fff" stroke-width="${(2.3 / s).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`; };
-  const APP_VERSION = '0.28.2';
+  const APP_VERSION = '0.28.3';
   const PKG_TTL = 48 * 3600000;   // restore packages work for 48 hours
   const INTENT_START = `## Why we're doing this
 When the power, phones or internet go down for more than a day or two, the hardest part isn't gear. It's not knowing where everyone is or what they'll do. Rally Book is our agreement, written down ahead of time.
@@ -3343,14 +3344,21 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
       }
       render();
     },
-    checkUpdate: async () => {
-      closeSheet(); toast('Checking for updates…');
+    // Stays in the Guide, right where you are: the answer shows next to the button.
+    checkUpdate: async (arg, btn) => {
+      const out = $('#updStatus'), say = (html) => { if (!out) return; out.hidden = false; out.innerHTML = html; out.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
+      if (btn) btn.disabled = true; say('Checking…');
       try {
         const r = await window.__rbCheckUpdate();
-        if (r === 'found') toast('A new version is ready. Tap Install update at the bottom.');
-        else if (r === 'none') toast("You're on the latest version.");
-        else toast("Couldn't check right now. Try again when you have internet.");
-      } catch { toast("Couldn't check right now. Try again when you have internet."); }
+        if (r === 'found') say('<strong>A new version is ready.</strong> <button class="btn btn-small btn-primary" type="button" data-act="installUpdate">Install update</button>');
+        else if (r === 'none') say("You're on the latest version.");
+        else say("Couldn't check right now. Try again when you have internet.");
+      } catch { say("Couldn't check right now. Try again when you have internet."); }
+      if (btn) btn.disabled = false;
+    },
+    installUpdate: async () => {
+      try { const r = await navigator.serviceWorker.getRegistration(); const w = r && (r.waiting || r.installing); if (w) { w.postMessage('install'); return; } } catch {}
+      toast('Close the Guide and tap Install update at the bottom.');
     },
     guide: () => ask({ title: 'How Rally Book works', ok: 'Got it', html: `
       <div class="guide">
@@ -3406,8 +3414,8 @@ ${pts.map((p, j) => `    <rtept lat="${p.lat}" lon="${p.lon}"><name>${letter(j)}
         <ul><li>The half-circle button at the top switches between Auto (matches your phone), Light and Dark. It's saved on this phone only.</li><li>The goggles button turns night vision (red on black) on and off in one tap. It keeps your eyes adjusted to the dark and saves battery.</li></ul>
         <h4>Important</h4>
         <ul><li>Rally Book does not replace 911 or emergency services. Call for help when you can.</li><li>Rally Book can only protect what stays inside it. Don't screenshot it: screenshots aren't encrypted. Copied coordinates and anything you open in another app are outside its protection too.</li></ul>
-        <p class="small muted">Rally Book version ${APP_VERSION}. Sample data in this practice version is made up.</p>
-        ${window.__rbCheckUpdate ? '<button class="btn btn-small" type="button" data-act="checkUpdate">Check for app updates</button><p class="small muted">Updates only install when you tap Install. Nothing changes on its own.</p>' : ''}
+        <p class="small muted">Rally Book version ${APP_VERSION}.${SEED.length ? ' Sample data in this practice version is made up.' : ''}</p>
+        ${window.__rbCheckUpdate ? '<button class="btn btn-small" type="button" data-act="checkUpdate">Check for app updates</button><div class="upd-status" id="updStatus" role="status" hidden></div><p class="small muted">Updates only install when you tap Install. Nothing changes on its own.</p>' : ''}
       </div>` }, null),
     minePoiFilter: (arg) => { if (minePoiHidden.has(arg)) minePoiHidden.delete(arg); else minePoiHidden.add(arg); keepView(render); },
     poiAdd: () => { minePoiHidden.delete('storage'); draft.pois.push({ type: 'storage', label: '', city: '', state: '', note: '', coords: '' }); render().then(() => $(`#pl-${draft.pois.length - 1}`)?.focus()); },
