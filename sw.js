@@ -1,5 +1,5 @@
 // Rally Book offline cache. Change VERSION whenever any file changes, so phones are offered the update.
-const VERSION = 'rbstaging-0.28.3';
+const VERSION = 'rbstaging-0.29';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {

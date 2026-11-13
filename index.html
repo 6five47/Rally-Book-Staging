@@ -491,6 +491,104 @@ details.headsup > p { margin-top: 8px; }
 .guide-security { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; display: grid; gap: 8px; background: var(--surface-2); }
 .lock-wait { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
+/* ================= THEME: CYBERPUNK (Blade Runner 2049 × Cyberpunk 2077), v0.29 =================
+   Dark = neon night city (magenta, cyan, 2077 yellow). Light = BR2049 orange-haze daylight. */
+:root {
+  --font-display: "Rajdhani", "DIN Condensed", "DIN Alternate", "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-mono: "Share Tech Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --radius: 2px;
+  /* light: amber smog */
+  --bg: #1E0D05; --on-bg: #FFD9B3; --on-bg-muted: #C98B5E;
+  --surface: #FFE6CC; --surface-2: #FFD4A8; --ink: #2A0F04; --muted: #7A4325; --line: #E8A06A;
+  --accent: #0B6E83; --accent-ink: #FFFFFF; --accent-soft: #CDEBEE;
+  --neon: #0B6E83; --neon2: #1F4FA8; --hl: #B8420F; --hl-soft: #FFD3B3; --orange: #C9500F; --pink: #B0306E;
+  --ok: #1F7A4A; --ok-soft: #CFF0D9; --bad: #B3261E; --bad-soft: #FFD9CC;
+  --map-water: #F6C79B; --map-land: #FFE3C4; --map-border: #B66A3A; --map-road: #4F8C96; --map-city: #4A1A06; --map-state: #C58A5E;
+  --glow: 0 0 0 transparent;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="night"]) {
+  --bg: #03070C; --on-bg: #E8F7FF; --on-bg-muted: #8BA3B8;
+  --surface: #0A111C; --surface-2: #101B2B; --ink: #E8F7FF; --muted: #8BA3B8; --line: #1E3550;
+  --accent: #00E5FF; --accent-ink: #00131A; --accent-soft: #052A33;
+  --neon: #00C9C8; --neon2: #3D8BFF; --hl: #FCEE0A; --hl-soft: #2B2900; --orange: #FF8A3D; --pink: #FF2E88;
+  --ok: #39FF88; --ok-soft: #0B2A18; --bad: #FF4D3D; --bad-soft: #2E0E0A;
+  --map-water: #03070D; --map-land: #0A111E; --map-border: #24508A; --map-road: #1D5C6A; --map-city: #00E5FF; --map-state: #2E4A80;
+  --glow: 0 0 12px rgba(0,229,255,.5); color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #03070C; --on-bg: #E8F7FF; --on-bg-muted: #8BA3B8;
+  --surface: #0A111C; --surface-2: #101B2B; --ink: #E8F7FF; --muted: #8BA3B8; --line: #1E3550;
+  --accent: #00E5FF; --accent-ink: #00131A; --accent-soft: #052A33;
+  --neon: #00C9C8; --neon2: #3D8BFF; --hl: #FCEE0A; --hl-soft: #2B2900; --orange: #FF8A3D; --pink: #FF2E88;
+  --ok: #39FF88; --ok-soft: #0B2A18; --bad: #FF4D3D; --bad-soft: #2E0E0A;
+  --map-water: #03070D; --map-land: #0A111E; --map-border: #24508A; --map-road: #1D5C6A; --map-city: #00E5FF; --map-state: #2E4A80;
+  --glow: 0 0 12px rgba(0,229,255,.5);
+}
+:root[data-theme="night"] { --neon: #FF4A3A; --neon2: #FF4A3A; --hl: #FF4A3A; --hl-soft: #2B0806; --glow: 0 0 0 transparent; }
+
+/* city backdrop: faint grid + haze behind the cards */
+#scroller, #lockView { background:
+  linear-gradient(180deg, color-mix(in srgb, var(--neon2) 12%, transparent), transparent 35%),
+  radial-gradient(120% 40% at 100% 0%, color-mix(in srgb, var(--pink) 7%, transparent), transparent 60%),
+  repeating-linear-gradient(0deg, color-mix(in srgb, var(--neon2) 7%, transparent) 0 1px, transparent 1px 28px),
+  repeating-linear-gradient(90deg, color-mix(in srgb, var(--neon2) 7%, transparent) 0 1px, transparent 1px 28px),
+  var(--bg); }
+:root[data-theme="night"] #scroller, :root[data-theme="night"] #lockView { background: var(--bg); }
+
+/* header: neon rail under it */
+header.top { border-bottom: 0; box-shadow: 0 2px 0 var(--neon), 0 6px 18px -6px var(--neon); }
+.brand { letter-spacing: .06em; }
+.brand span { color: var(--neon2); text-shadow: 0 0 10px color-mix(in srgb, var(--neon2) 70%, transparent); }
+h2, .lc-step > .head-row h3, .comms-panel > .head-row h3, .section-title { letter-spacing: .06em; text-shadow: 0 0 14px color-mix(in srgb, var(--neon) 45%, transparent); }
+
+/* panels: chamfered corners and a thin neon edge */
+.panel, .lc-btn, details.card, details.route, .poi-card, .hero {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+.panel, details.card { border-color: color-mix(in srgb, var(--neon2) 35%, var(--line)); box-shadow: inset 3px 0 0 var(--neon); }
+.label, .meta { font-family: var(--font-mono); letter-spacing: .08em; }
+
+/* buttons: hard-edged, glowing */
+.btn { border-radius: 0; text-transform: uppercase; letter-spacing: .06em; font-family: var(--font-display); font-size: 16px; }
+.btn-primary { box-shadow: var(--glow); clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px)); }
+.btn-small { font-size: 14px; }
+.input, .area, .select { border-radius: 0; font-family: var(--font-mono); }
+.input:focus, .area:focus, .select:focus { outline: none; border-color: var(--neon2); box-shadow: 0 0 0 1px var(--neon2), 0 0 14px color-mix(in srgb, var(--neon2) 45%, transparent); }
+
+/* tabs: cyan active marker */
+nav.tabs { border-top: 0; box-shadow: 0 -2px 0 var(--neon2), 0 -6px 18px -8px var(--neon2); }
+nav.tabs button { font-family: var(--font-mono); letter-spacing: .1em; }
+nav.tabs button[aria-selected="true"] { color: var(--neon2); border-top-color: var(--neon2); text-shadow: 0 0 8px color-mix(in srgb, var(--neon2) 60%, transparent); }
+
+/* highlights: "You" and similar in 2077 yellow */
+.chip { border-radius: 0; }
+.chip-accent { background: var(--hl-soft); color: var(--hl); border: 1px solid var(--hl); }
+.pace-letter, .lc-num { border-radius: 0 !important; }
+.lc-btn { border-color: var(--orange); }
+.lc-btn .lc-ico { background: var(--orange); color: #140600; }
+.lc-btn .rcaret { color: var(--orange); }
+.pace-letter { background: var(--orange) !important; color: #140600 !important; }
+:root[data-theme="night"] .lc-btn, :root[data-theme="night"] .lc-btn .lc-ico, :root[data-theme="night"] .pace-letter { border-color: #7A1C14; background: #4A0F0A !important; color: #FF6A5A !important; }
+
+/* header pictures: neon duotone wash */
+.hero-art { filter: saturate(1.35) contrast(1.15) hue-rotate(175deg); }
+.hero::after { background: linear-gradient(180deg, color-mix(in srgb, var(--neon2) 18%, transparent) 0%, color-mix(in srgb, var(--surface) 75%, transparent) 55%, var(--surface) 100%) !important; }
+:root[data-theme="night"] .hero-art { filter: grayscale(1) brightness(.55); }
+
+/* subtle scanlines over the whole app (dark only) */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="night"]) body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50; background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px); } }
+:root[data-theme="dark"] body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 50; background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px); }
+
+/* login screen: always the dark neon look, whatever the phone's setting (night vision still wins) */
+:root:not([data-theme="night"]) #lockView {
+  --bg: #03070C; --surface: #0A111C; --surface-2: #101B2B; --ink: #E8F7FF; --muted: #8BA3B8; --line: #1E3550;
+  --accent: #00E5FF; --accent-ink: #00131A; --accent-soft: #052A33;
+  --neon: #00C9C8; --neon2: #3D8BFF; --hl: #FCEE0A; --hl-soft: #2B2900; --orange: #FF8A3D; --pink: #FF2E88;
+  --ok: #39FF88; --ok-soft: #0B2A18; --bad: #FF4D3D; --bad-soft: #2E0E0A;
+  --glow: 0 0 12px rgba(0,229,255,.5); color-scheme: dark; color: var(--ink);
+}
+:root:not([data-theme="night"]):has(#lockView:not([hidden])) { --bg: #03070C; }
+
 /* STAGING marker: amber stripe and label so it's never mistaken for the real app */
 header.top { box-shadow: inset 0 -5px 0 #F5C400; }
 .brand::after { content: 'Staging · test copy'; display: block; width: max-content; margin-top: 4px; font-size: 11px; line-height: 1; letter-spacing: .1em; padding: 3px 6px; border-radius: 4px; background: #F5C400; color: #1A1A1A; }
@@ -638,7 +736,7 @@ header.top { box-shadow: inset 0 -5px 0 #F5C400; }
   const poiBadge = (type, cls = '') => { const ti = typeInfo(type); return `<span class="poi-num ${cls}" style="background:${ti.color}" aria-hidden="true">${iconSvg(ti.icon, 15)}</span>`; };
   // Same symbol inside an SVG map at (x, y), sized to fit a marker of radius r.
   const mapIcon = (type, x, y, r) => { const s = (r * 1.25) / 24; return `<path d="${iconPath(typeInfo(type).icon)}" transform="translate(${(x - 12 * s).toFixed(1)} ${(y - 12 * s).toFixed(1)}) scale(${s.toFixed(3)})" fill="none" stroke="#fff" stroke-width="${(2.3 / s).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`; };
-  const APP_VERSION = '0.28.3';
+  const APP_VERSION = '0.29';
   const PKG_TTL = 48 * 3600000;   // restore packages work for 48 hours
   const INTENT_START = `## Why we're doing this
 When the power, phones or internet go down for more than a day or two, the hardest part isn't gear. It's not knowing where everyone is or what they'll do. Rally Book is our agreement, written down ahead of time.
